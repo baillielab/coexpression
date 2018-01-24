@@ -16,29 +16,6 @@ parser.add_argument('-wd', '--working_files_dir',	type=str, default='null',	help
 # usually default
 parser.add_argument('-t', '--numthreads',	type=int, default=4,	help='numthreads used')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# OBSELETE : obtained from settings
-'''
-parser.add_argument('-sc', '--snp_count',	type=int, default=1,	help='snp_count')
-parser.add_argument('-gl', '--genome_length',	type=int, default=1,	help='genome_length')
-parser.add_argument('-ef', '--expression_file',	type=str, default='null',	help='filepath')
-parser.add_argument('-fc', '--feature_coordinates',	type=str, default='null',	help='filepath')
-parser.add_argument('-cf', '--correlationfile',	type=str, default='null',	help='filepath')
-parser.add_argument('-sl', '--supplementary_label',	type=str, default='null',	help='supplementary_label')
-parser.add_argument('-e', '--useremail', default="no_email", 	help='user email')
-parser.add_argument('-cm', '--correlationmeasure',	type=str, choices=['Spearman', 'Pearson'], default='Spearman',	help='filepath')
-parser.add_argument('-ss', '--soft_separation',	type=int, default=100000,	help='filepath')
-parser.add_argument('-s', '--nsp',	type=float, default=1.0,	help='node-specific pvalue in use; specify precision (1=perfect, 0=globaldistribution is used.)')
-parser.add_argument('-v', '--verbose',	action="store_true", default=False,	help='increases verbosity')
-parser.add_argument('-l', '--seedfile',	default="none",		help='seed file')
-parser.add_argument('-j', '--pval_to_join',	type=float, default=0.1,	help='pval_to_join')
-parser.add_argument('-u', '--useaverage',	action="store_true", default=False,	help='use the average coexpression score (eliminates position enrichment signal)')
-parser.add_argument('-z', '--doitagain',	action="store_true", default=False,	help='create a whole new permutations set')
-parser.add_argument('-a', '--anticorrelation',	action="store_true", default=False,	help='anticorrelation')
-parser.add_argument('-i', '--noiter',	action="store_true", default=False,	help='noiter')
-parser.add_argument('-r', '--recordedges',	action="store_true", default=False,	help='recordedges')
-parser.add_argument('-m', '--selectionthreshold_is_j',	action="store_true", default=False,	help='selectionthreshold_is_j')
-parser.add_argument('-st', '--selectionthreshold', type=float, default=0,	help='selectionthreshold')
-'''
 args = parser.parse_args()
 module = sys.modules[__name__]
 for name,value in vars(args).iteritems():
@@ -158,12 +135,20 @@ suffix = ""
 outputfilelabel = "_".join([x for x in [prefix, supplementary_label, suffix] if x!=''])
 #--------
 realmeasures=[indmeasure[prom1] for prom1 in indjoined]
-#------------save qq_plot files-----------------
+#------------save qq_plot file-----------------
 qqfile = outputfilelabel+".qq_plot"
-try:
-	qq_plot(realmeasures,perm_indm, os.path.join(working_files_dir,qqfile))
-except:
-	fail("qq plot not working")
+o = open(qqfile,"w")
+o.write("rand\t%s\n"%filename)
+limit = min(len(rand),len(real))
+real.sort()
+rand.sort()
+for i in range(limit):
+	indexa = int(len(rand)*float(i)/limit)
+	indexb = int(len(real)*float(i)/limit)
+	a = rand[indexa]
+	b = real[indexb]
+	o.write("%s\t%s\n"%(a,b,))
+o.close()
 #------------calculate FDR----------------------
 permuted_indm_p = sorted([empiricalp(x,perm_indm) for x in realmeasures], reverse=False)
 fdr_permuted_indm = list(fdr_correction(permuted_indm_p,0.05,"negcorr")[1])
@@ -429,34 +414,6 @@ o.write("fullresults\t%s\n"%(fullresults))
 o.write("htmlresults\t%s\n"%(htmlresults))
 o.write("email\t%s\n"%(useremail))
 o.close()
-
-for filename in [htmlstatsfile, htmlresults, filelist]:
-	#TEXT FILES READABLE BY PHP GO IN WORKING FILES DIR
-	filename = os.path.join(working_files_dir, filename)
-	fix_permissions(filename)
-
-for filename in ["%s.svg"%(qqfile), "%s.zip"%(layoutname), fullresults]:
-	#IMAGE FILES AND ZIP FILES GO IN IMAGE DIR
-	filename = os.path.join(working_files_dir, filename)
-	fix_permissions(filename)
-
-import smtplib
-from email.mime.text import MIMEText
-msg = MIMEText("Your script at baillielab.net/coexpression has completed. Follow this link to see the results:\n http://baillielab.net/coexpression/view_results.php?id=%s"%(supplementary_label))
-sender = "autosend@baillielab.net"
-recipient = useremail
-msg['Subject'] = 'Script completed'
-msg['From'] = sender
-msg['To'] = recipient
-
-try:
-	s = smtplib.SMTP('localhost')
-	s.sendmail(sender, [recipient], msg.as_string())
-	s.quit()
-except:
-	pass
-
-#------------
 
 
 
