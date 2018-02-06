@@ -115,6 +115,7 @@ ptcf = exp_dict.keys()  #promoters to choose from
 # NEWLY DEVELOPMENTS BY AG
 dictlen=len(exp_dict)
 entrylen=len(exp_dict[ptcf[0]])
+
 # ctype structure for all promoter pair data
 alldata_c= (c_double * (dictlen*entrylen))()
 
@@ -122,10 +123,18 @@ if correlationmeasure == "Spearman": # creates an equivalent but ranked dictiona
 	exp_dict_rank={}
 	for i in exp_dict.keys():
 		exp_dict_rank[i]=stats.rankdata(exp_dict[i])
+
 promindex_lookup={}
 ki=0
 for ikey in xrange(len(ptcf)):
 	promindex_lookup[ptcf[ikey]]=ikey
+	for entry in xrange(entrylen):
+		if correlationmeasure == "Spearman":
+			alldata_c[ki]=float(exp_dict_rank[ptcf[ikey]][entry])
+		else:
+			alldata_c[ki]=float(exp_dict[ptcf[ikey]][entry])
+		ki=ki+1
+
 if verbose: print "promindex made"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 nodespecificcorrelationlists={}
@@ -167,12 +176,13 @@ for i in range(len(lines)):
 			thisp=1000
 	if thisp < snp_map[this_promoter]["p"]:
 		snp_map[this_promoter]["p"] = thisp
+
+if verbose: print ('snp map read.')
+#-------------------------------------#
 inputpromoterlist = snp_map.keys()
 for new in seedpromoters:
 	if new not in snp_map.keys():
 		snp_map[new]={"p":1000.125} #specific p-value to label these additions
-if verbose: print ('snp map read.')
-
 #-------------------------------------#
 edges_sought=0
 
@@ -228,7 +238,6 @@ if use_specific_p:
 	#ctype data structure to hold results
 	result_all_c= (c_double * nPromPairs)()
 
-	print "starting phase 3"
 	# get all the coefficients
 	coexpression.getPearson(byref(alldata_c), \
 					byref(result_all_c), \
@@ -243,6 +252,7 @@ if use_specific_p:
 	# set the NANs to -99, and store all in python list
 	AGcorrelations=[]
 	for x in range(nPromPairs):
+		print x, result_all_c[x]
 		if math.isnan(result_all_c[x]):
 			correlation=-99
 		else:
@@ -273,6 +283,7 @@ if use_specific_p:
 	print "pval prep done in:", tt_p2 - tt_p1
 ttb=timeit.default_timer()
 ip=0
+
 for i in range(len(promoters)):
 	for j in range(len(promoters)): # NB must do this from both sides for nsp (ie not for j in range(i,len...))
 		tt_l1=timeit.default_timer()
@@ -526,6 +537,7 @@ objectdump = {
 	'joining_instructions': joining_instructions,
 	'winners': winners,
 	'allpromoterscores': allpromoterscores,
+	'snp_map': snp_map,
 }
 
 for label, var in objectdump.iteritems():

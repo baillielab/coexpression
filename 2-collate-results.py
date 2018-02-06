@@ -100,6 +100,9 @@ f.close()
 f=open(os.path.join(storage_dir_perm_results, filestem+'.allpromoterscores.0'))
 allpromoterscores = json.load(f)
 f.close()
+f=open(os.path.join(storage_dir_perm_results, filestem+'.snp_map.0'))
+snp_map = json.load(f)
+f.close()
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -136,19 +139,22 @@ outputfilelabel = "_".join([x for x in [prefix, supplementary_label, suffix] if 
 #--------
 realmeasures=[indmeasure[prom1] for prom1 in indjoined]
 #------------save qq_plot file-----------------
-qqfile = outputfilelabel+".qq_plot"
-o = open(qqfile,"w")
-o.write("rand\t%s\n"%filename)
-limit = min(len(rand),len(real))
-real.sort()
-rand.sort()
-for i in range(limit):
-	indexa = int(len(rand)*float(i)/limit)
-	indexb = int(len(real)*float(i)/limit)
-	a = rand[indexa]
-	b = real[indexb]
-	o.write("%s\t%s\n"%(a,b,))
-o.close()
+try:
+	qqfile = outputfilelabel+".qq_plot"
+	o = open(os.path.join(working_files_dir,qqfile),"w")
+	o.write("rand\t%s\n"%qqfile)
+	limit = min(len(fullrange_perm_indm),len(realmeasures))
+	realmeasures.sort()
+	fullrange_perm_indm.sort()
+	for i in range(limit):
+		indexa = int(len(fullrange_perm_indm)*float(i)/limit)
+		indexb = int(len(realmeasures)*float(i)/limit)
+		a = fullrange_perm_indm[indexa]
+		b = realmeasures[indexb]
+		o.write("%s\t%s\n"%(a,b))
+	o.close()
+except:
+	pass
 #------------calculate FDR----------------------
 permuted_indm_p = sorted([empiricalp(x,perm_indm) for x in realmeasures], reverse=False)
 fdr_permuted_indm = list(fdr_correction(permuted_indm_p,0.05,"negcorr")[1])

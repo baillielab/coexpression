@@ -1,6 +1,6 @@
 ﻿#!/opt/local/bin/python
 # -*- coding: UTF-8 -*-
-version = 'v1.20'
+version = 'v1.21'
 
 # duplicated imports
 import string, math, os
