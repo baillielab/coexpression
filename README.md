@@ -1,6 +1,6 @@
 # coexpression
 
-##Network density analysis to detect coexpression within genome-wide data
+## Network density analysis to detect coexpression within genome-wide data
 
 This script is the development version of the network density analysis 
 used in our paper. In future, we hope to release a user-friendly, 
