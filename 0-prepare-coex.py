@@ -220,8 +220,7 @@ exp_dict={}
 
 if verbose: print('verbose mode')
 #seed random number generator to allow for testing
-random.seed(176202)
-print('WARNING: using fixed seed')
+#random.seed(176202)
 
 starttime = time.time()
 #-######################
