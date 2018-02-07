@@ -2,10 +2,19 @@
 # -*- coding: UTF-8 -*-
 ''' run a pre-prepared coexpresion analysis '''
 
-import string, sys, os, subprocess, threading, copy
+import sys, subprocess, threading, copy
 from coexfunctions import *
 #----------------------------------------
 import argparse
+# ----------------------------------------
+import argparse
+import copy
+import subprocess
+import sys
+import threading
+
+from coexfunctions import *
+
 parser = argparse.ArgumentParser()
 
 # essential
