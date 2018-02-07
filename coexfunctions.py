@@ -1,4 +1,4 @@
-﻿#!/opt/local/bin/python
+#!/opt/local/bin/python
 # -*- coding: UTF-8 -*-
 version = 'v1.21'
 
@@ -147,7 +147,7 @@ def read_expression_file(filename, datastartcol='autodetect', datastartrow='auto
         try:
             dsr
         except:
-            dsr = 0  #  if data starts in row 0 then this won't be detected above
+            dsr = 0  # if data starts in row 0 then this won't be detected above
     else:
         dsr = 0  # necessary in case firstfloatfailcols is empty
         dsc = 0

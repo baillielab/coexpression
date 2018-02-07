@@ -1,4 +1,4 @@
-﻿#!/opt/local/bin/python
+#!/opt/local/bin/python
 # -*- coding: UTF-8 -*-
 
 import copy
@@ -29,11 +29,11 @@ resdir = config.get('directorypaths', 'resdir')
 pathtobedtools = config.get('directorypaths', 'pathtobedtools')
 f5resource = config.get('directorypaths', 'f5resource')
 # -------------------------------------------------------------------------------
-if not os.path.isabs(sourcefilesdir):  #  then the user has probably made a relative path to the script.
+if not os.path.isabs(sourcefilesdir):  # then the user has probably made a relative path to the script.
     sourcefilesdir = os.path.join(coexappdir, sourcefilesdir)
-if not os.path.isabs(resdir):  #  then the user has probably made a relative path to the script.
+if not os.path.isabs(resdir):  # then the user has probably made a relative path to the script.
     resdir = os.path.join(coexappdir, resdir)
-if not os.path.isabs(pathtobedtools):  #  then the user has probably made a relative path to the script.
+if not os.path.isabs(pathtobedtools):  # then the user has probably made a relative path to the script.
     pathtobedtools = os.path.join(coexappdir, pathtobedtools)
 # -------------------------------------------------------------------------------
 import argparse
@@ -162,7 +162,7 @@ chrom_col = 0  # chrom is an integer only
 address_col = 1
 snp_details_p_col = -1
 # -------------------------------------------------------------------------------
-#  working files
+# working files
 working_files_dir = "%s%s" % (resdir, output_directory_label)
 jobfile = os.path.join(working_files_dir, "jobfile.txt")
 collationcommandfile = os.path.join(working_files_dir, "collationcommandfile.txt")
@@ -361,9 +361,9 @@ o.close()
 
 # -#########################################################################################
 # -#########################################################################################
-# -#########																		 ##########
-# -#########				START OF MAPPING										 ##########
-# -#########																	 	 ##########
+# -######### ##########
+# -#########START OF MAPPING ##########
+# -#########  ##########
 # -#########################################################################################
 # -#########################################################################################
 # -#########################################################################################
@@ -471,7 +471,7 @@ if numhits > 1:  # CAN ONLY PROCEED IF THERE ARE ENOUGH SNPS TO BE WORTH MAPPING
                     backdict["%s_%s" % (chrom, address)] = get_gwad(chrom, address, chromrange)
                 except:
                     continue
-                    # •••••••••••
+                    # 
         # NOW ADD ALL THE REAL HITS TOO, JUST IN CASE THE BACKGROUND FILE ISN'T PERFECT
         # addition 26 Feb 2016 to allow immunochip background
         for chrom in snp_bed_data:
@@ -481,7 +481,7 @@ if numhits > 1:  # CAN ONLY PROCEED IF THERE ARE ENOUGH SNPS TO BE WORTH MAPPING
                     backdict[snpaddress]
                 except:
                     backdict["%s_%s" % (chrom, address)] = get_gwad(chrom, address, chromrange)
-                    # •••••••••••
+                    # 
 
     for shiftindex in range(len(shifts)):
         # MAKE PERMUTATIONS
@@ -567,9 +567,9 @@ if numhits > 1:  # CAN ONLY PROCEED IF THERE ARE ENOUGH SNPS TO BE WORTH MAPPING
 # -#########################################################################################
 # -#########################################################################################
 # -#########################################################################################
-# -########																	    ###########
-# -########				 START OF COEXPRESSION ANALYSIS					        ###########
-# -########																	    ###########
+# -########    ###########
+# -######## START OF COEXPRESSION ANALYSIS        ###########
+# -########    ###########
 # -#########################################################################################
 # -#########################################################################################
 # -#########################################################################################
@@ -729,7 +729,7 @@ scatter_nsp = []
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#							RANDOMISATION POST MAPPING
+#RANDOMISATION POST MAPPING
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -832,7 +832,7 @@ if permutationmode == 'post':
                     elif runcount < 4:  # next few runs - try different shifts, select the proms that are needed.
                         newlist = [listitem(all_labels, all_labels.index(promoter) + int(
                             random.random() * len(primary_dict.keys() * 3))) for promoter in primary_dict.keys()]
-                    else:  #  shifts have failed, now create the right distribution by seeding from a random promoter
+                    else:  # shifts have failed, now create the right distribution by seeding from a random promoter
                         newlist = []
                         for n in needed:
                             r = int(n * 3)
@@ -858,11 +858,11 @@ if permutationmode == 'post':
                         if real.count(x) > perm.count(x):
                             needed += [x for y in range(real.count(x) - perm.count(x))]
                 if (len(perm_to_join) == len(real_to_join)) and (
-                    len(thisperm) == len(primary_dict.keys())):  #  we have the right distribution
+                    len(thisperm) == len(primary_dict.keys())):  # we have the right distribution
                     notready = False
                 else:
                     if verbose: print ("failed perm", perm)
-            if notready:  #  the perfect distribution was not found despite many searches. Now choose the right distribution from the permuted excess:
+            if notready:  # the perfect distribution was not found despite many searches. Now choose the right distribution from the permuted excess:
                 nearestperm = []
                 remaining = perm_to_join.keys()
                 for desiredgrouplen in list(set(real)):
@@ -939,7 +939,7 @@ for permnum, shift in enumerate(shifts[shiftsdone:]):
     pcmd = "python 1-make-network.py -mf {} -wd {}".format(mapfiles[shift], working_files_dir)
     jobs.append(pcmd)
 o = open(jobfile, 'w')
-o.write("{}".format('\n'.join(jobs[::-1])))  #  reverse list so that biggest job (real data) is started first
+o.write("{}".format('\n'.join(jobs[::-1])))  # reverse list so that biggest job (real data) is started first
 o.close()
 
 o = open(collationcommandfile, 'w')

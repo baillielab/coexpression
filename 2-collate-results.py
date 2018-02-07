@@ -1,4 +1,4 @@
-﻿#!/opt/local/bin/python
+#!/opt/local/bin/python
 # -*- coding: UTF-8 -*-
 
 from coexfunctions import *
@@ -24,7 +24,7 @@ for name, value in vars(args).iteritems():
     print name, value
     setattr(module, name, value)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-#  GET SETTINGS
+# GET SETTINGS
 storedesettings = readsettings(working_files_dir)
 # numperms = storedesettings['numperms']
 verbose = storedesettings['verbose']
@@ -73,7 +73,7 @@ for permresultsfile in [x for x in interimfiles if ".indmeasure." in x and not x
     indmeasure = json.load(f)
     f.close()
     perm_indm += indmeasure.values()
-numperms = len(perm_indm)  #  the actual number of perms completed
+numperms = len(perm_indm)  # the actual number of perms completed
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # read real data
 realdataresults = [x for x in interimfiles if x.endswith('.0')]
@@ -83,7 +83,7 @@ if len(filestems) > 1:
     sys.exit()
 filestem = filestems[0].replace('.indmeasure.0', '')
 
-f = open(os.path.join(storage_dir_perm_results, filestem + '.indmeasure.0'))  #  main results
+f = open(os.path.join(storage_dir_perm_results, filestem + '.indmeasure.0'))  # main results
 indmeasure = json.load(f)
 f.close()
 f = open(os.path.join(storage_dir_perm_results, filestem + '.individualscores.0'))  # for circos

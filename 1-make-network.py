@@ -1,4 +1,4 @@
-﻿#!/opt/local/bin/python
+#!/opt/local/bin/python
 # -*- coding: UTF-8 -*-
 
 from coexfunctions import *
@@ -25,20 +25,20 @@ parser.add_argument('-r', '--recordedges', action="store_true", default=False, h
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # OBSELETE : obtained from settings
 '''
-parser.add_argument('-st', '--selectionthreshold', type=float, default=0,	help='selectionthreshold')
-parser.add_argument('-i', '--noiter',	action="store_true", default=False,	help='noiter')
-parser.add_argument('-a', '--anticorrelation',	action="store_true", default=False,	help='anticorrelation')
-parser.add_argument('-u', '--useaverage',	action="store_true", default=False,	help='use the average coexpression score (eliminates position enrichment signal)')
-parser.add_argument('-j', '--pval_to_join',	type=float, default=0.1,	help='pval_to_join')
-parser.add_argument('-s', '--nsp',	type=float, default=1.0,	help='node-specific pvalue in use; specify precision (1=perfect, 0=globaldistribution is used.)')
-parser.add_argument('-l', '--seedfile',	default="none",		help='seed file')
-parser.add_argument('-v', '--verbose',	action="store_true", default=False,	help='increases verbosity')
-parser.add_argument('-ef', '--expression_file',	type=str, default='null',	help='filepath')
-parser.add_argument('-fc', '--feature_coordinates',	type=str, default='null',	help='filepath')
-parser.add_argument('-cf', '--correlationfile',	type=str, default='null',	help='filepath')
-parser.add_argument('-sl', '--supplementary_label',	type=str, default='null',	help='supplementary_label')
-parser.add_argument('-cm', '--correlationmeasure',	type=str, choices=['Spearman', 'Pearson'], default='Spearman',	help='filepath')
-parser.add_argument('-ss', '--soft_separation',	type=int, default=100000,	help='filepath')
+parser.add_argument('-st', '--selectionthreshold', type=float, default=0,help='selectionthreshold')
+parser.add_argument('-i', '--noiter',action="store_true", default=False,help='noiter')
+parser.add_argument('-a', '--anticorrelation',action="store_true", default=False,help='anticorrelation')
+parser.add_argument('-u', '--useaverage',action="store_true", default=False,help='use the average coexpression score (eliminates position enrichment signal)')
+parser.add_argument('-j', '--pval_to_join',type=float, default=0.1,help='pval_to_join')
+parser.add_argument('-s', '--nsp',type=float, default=1.0,help='node-specific pvalue in use; specify precision (1=perfect, 0=globaldistribution is used.)')
+parser.add_argument('-l', '--seedfile',default="none",help='seed file')
+parser.add_argument('-v', '--verbose',action="store_true", default=False,help='increases verbosity')
+parser.add_argument('-ef', '--expression_file',type=str, default='null',help='filepath')
+parser.add_argument('-fc', '--feature_coordinates',type=str, default='null',help='filepath')
+parser.add_argument('-cf', '--correlationfile',type=str, default='null',help='filepath')
+parser.add_argument('-sl', '--supplementary_label',type=str, default='null',help='supplementary_label')
+parser.add_argument('-cm', '--correlationmeasure',type=str, choices=['Spearman', 'Pearson'], default='Spearman',help='filepath')
+parser.add_argument('-ss', '--soft_separation',type=int, default=100000,help='filepath')
 '''
 args = parser.parse_args()
 module = sys.modules[__name__]
@@ -46,7 +46,7 @@ for name, value in vars(args).iteritems():
     print name, value
     setattr(module, name, value)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-#  GET SETTINGS
+# GET SETTINGS
 storedesettings = readsettings(working_files_dir)
 # numperms = storedesettings['numperms']
 verbose = storedesettings['verbose']
@@ -76,7 +76,7 @@ sourcefilesdir = config.get('directorypaths', 'sourcefilesdir')
 resdir = config.get('directorypaths', 'resdir')
 pathtobedtools = config.get('directorypaths', 'pathtobedtools')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-#  NAME OUTPUT DIR
+# NAME OUTPUT DIR
 storage_dir_perm_results = os.path.join(working_files_dir, "perm_results_store")
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # READ INPUT FILES
@@ -354,11 +354,11 @@ for prom in individualscores:
     for other_prom in individualscores[prom]:
         all_proms.append(other_prom)
 all_proms = list(set(all_proms))
-# •••••••••••••••••••••••••••••••••••••
-#  check if this made a difference
+# 
+# check if this made a difference
 commontoboth = set(all_proms) & set(promoters)
 print "promoters:%s common:%s all_proms:%s " % (len(promoters), len(commontoboth), len(all_proms))
-# •••••••••••••••••••••••••••••••••••••
+# 
 
 # -------------------------------------#
 # work out which promoters should be joined as one.
@@ -392,7 +392,7 @@ for group_label in prom_to_join:
         continue
     winners[group_label] = max(scores.iteritems(), key=operator.itemgetter(1))[0]
 # ____________________________________________________________________________________
-#  new in v0.63: repeat choice of winners using the new consensus to reduce the influence of large groups of promoters/enhancers
+# new in v0.63: repeat choice of winners using the new consensus to reduce the influence of large groups of promoters/enhancers
 for group_label in prom_to_join:
     scores = {}
     checkscorelens = []
@@ -405,10 +405,10 @@ for group_label in prom_to_join:
                     try:
                         thisscore.append(individualscores[prom][otherprom])
                     except:
-                        # •••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
-                        # •••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
-                        # •••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
-                        print "••••••••• prom lookup failure. output dump follows •••••••••"
+                        # 
+                        # 
+                        # 
+                        print "prom lookup failure. output dump follows "
                         try:
                             individualscores[prom]
                         except:
@@ -435,15 +435,15 @@ for group_label in prom_to_join:
                         for group_label2 in prom_to_join:
                             print group_label2, prom_to_join[group_label2]
                         print "================"
-                        # •••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
-                        # •••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
-                        # •••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+                        # 
+                        # 
+                        # 
             scores[prom] = sum(thisscore)
-            allpromoterscores[prom] = scores[prom]  #  store for output later
+            allpromoterscores[prom] = scores[prom]  # store for output later
             checkscorelens.append(len(thisscore))
     if checkscorelens.count(checkscorelens[0]) != len(checkscorelens):
         if verbose: print("checkscorelens not equal!",
-                          set(checkscorelens))  #  each group should be scored against the same number of other groups.
+                          set(checkscorelens))  # each group should be scored against the same number of other groups.
     if len(scores) == 0:
         continue
     new_winner = max(scores.iteritems(), key=operator.itemgetter(1))[0]
@@ -537,7 +537,7 @@ if verbose: print ("**********s**********")
 
 # _______________________________________________________________________________________
 
-#  output the findings for this network run - to be collated by 2-collate-results.py
+# output the findings for this network run - to be collated by 2-collate-results.py
 
 objectdump = {
     'indmeasure': indmeasure,

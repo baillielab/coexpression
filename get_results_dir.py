@@ -1,4 +1,4 @@
-﻿#!/opt/local/bin/python
+#!/opt/local/bin/python
 # -*- coding: UTF-8 -*-
 
 '''Quick hack to get (generated) name of results directory
@@ -20,11 +20,11 @@ resdir = config.get('directorypaths', 'resdir')
 pathtobedtools = config.get('directorypaths', 'pathtobedtools')
 f5resource = config.get('directorypaths', 'f5resource')
 # -------------------------------------------------------------------------------
-if not os.path.isabs(sourcefilesdir):  #  then the user has probably made a relative path to the script.
+if not os.path.isabs(sourcefilesdir):  # then the user has probably made a relative path to the script.
     sourcefilesdir = os.path.join(coexappdir, sourcefilesdir)
-if not os.path.isabs(resdir):  #  then the user has probably made a relative path to the script.
+if not os.path.isabs(resdir):  # then the user has probably made a relative path to the script.
     resdir = os.path.join(coexappdir, resdir)
-if not os.path.isabs(pathtobedtools):  #  then the user has probably made a relative path to the script.
+if not os.path.isabs(pathtobedtools):  # then the user has probably made a relative path to the script.
     pathtobedtools = os.path.join(coexappdir, pathtobedtools)
 # -------------------------------------------------------------------------------
 import argparse
@@ -136,7 +136,7 @@ output_directory_label += "_pj%s" % pval_to_join
 expstring = string.split(specialexpressionfile, "/")[-1].replace('.expression', '')
 if specialexpressionfile != "not_specified": output_directory_label += "_%s" % expstring
 # -------------------------------------------------------------------------------
-#  working files
+# working files
 working_files_dir = "%s%s" % (resdir, output_directory_label)
 
 print working_files_dir
