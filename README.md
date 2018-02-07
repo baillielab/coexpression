@@ -1,20 +1,56 @@
-==Installation==
+# coexpression
 
-=Dependencies=
-The following python modules must be installed:
-- networkx
+##Network density analysis to detect coexpression within genome-wide data
+
+This script is the development version of the network density analysis 
+used in our paper. In future, we hope to release a user-friendly, 
+production version of the script, but for now we have shared the 
+version of the code that we used for the analyses in the paper. 
+It is far from perfect, but if you follow these instructions you 
+should be able to replicate our findings, and generate your own. 
+Please contact us through coexpression.net or GitHub if you have any 
+problems.
+
+Please refer to the supplementary methods for (http://biorxiv.org/content/early/2016/12/20/095349) for a full explanation of the method used here.
+
+## TO DO
+
+Add in additional info from https://raw.githubusercontent.com/baillielab/coexpression/master/README.md
+
+## How to install
+
+### Requirements
+
+The coexpression code is mainly written in Python 2.7. Some code is written in C and OpenMP. In addition to Python, you will need:
+
+* gcc (4.8.x recommended)
+* [bedtools](https://bedtools.readthedocs.io) (2.x recommended)
 
 
+### Python dependencies
 
-==Example commands==
-=1 Run a small test analysis=
-- small input bed file
-- run 3 permutations
-- use a tiny expression file (a tenth of the size of the standard one)
-python 0-run-coex.py -f ../supfiles-coex/test.bed -n 3 -x ../supfiles-coex/pure_f5p_condense_ptt_minimal_av.expression -v
+An [Anaconda Python environment](https://www.anaconda.com/download) is recommended. The `environment.yml` file contains the Python dependencies. 
 
+Create a conda enviroment:
+```
+$ conda env create -f environment.yml
+$ source activate coexpression
+```
 
-=2 Run a single network analysis=
-python 1-make-network.py -ef ../supfiles-coex/pure_f5p_condense_ptt_minimal_av.expression -fc /mnt/ris-fas1a/linux_groups2/baillie_grp/coexpression/coex-app/../supfiles-coex/f5ep300_100.bed -cf /mnt/ris-fas1a/linux_groups2/baillie_grp/coexpression/coex-app/../supfiles-coex/pure_f5p_condense_ptt_minimal_av.expression.spearmanlist -mf /mnt/ris-fas1a/linux_groups2/baillie_grp/coexpression/coex-app/../results-coex/test_complete_CIRCULAR_pj0.1_pure_f5p_condense_ptt_minimal_av/premapping_permutation_store/f5ep300_100_test.snps_mapped.0.bed -cm Spearman -sl Spearman_0_3CIRCULARperms -wd /mnt/ris-fas1a/linux_groups2/baillie_grp/coexpression/results-coex/test_complete_CIRCULAR_pj0.1_pure_f5p_condense_ptt_minimal_av -v 
+## Example usage
 
-python 1-make-network.py -ef ../supfiles-coex/pure_f5p_condense_ptt_minimal_av.expression -fc /mnt/ris-fas1a/linux_groups2/baillie_grp/coexpression/supfiles-coex/f5ep300_100.bed -cf /mnt/ris-fas1a/linux_groups2/baillie_grp/coexpression/coex-app/../supfiles-coex/pure_f5p_condense_ptt_minimal_av.expression.spearmanlist -mf /mnt/ris-fas1a/linux_groups2/baillie_grp/coexpression/coex-app/../results-coex/test_complete_CIRCULAR_pj0.1_pure_f5p_condense_ptt_minimal_av/permutation_store/f5ep300_100.0.bed -wd /mnt/ris-fas1a/linux_groups2/baillie_grp/coexpression/coex-app/../results-coex/test_complete_CIRCULAR_pj0.1_pure_f5p_condense_ptt_minimal_av -sl coex
+First, run the prepare script:
+```
+$ python 0-prepare-coex.py -po -n 100 -w 2000 -p backcirc -f ${INPUT_FILE} -b ${BACKGROUND_FILE} 
+```
+this will create a directory called `../results-coex/BLAH`. Then for each of the permutations run:
+
+```
+$ RESULTS=../results-coex/BLAH
+$ python 1-make-network.py -mf ${RESULTS}/permutation_store/f5ep300_100.NNNNNN.bed -wd ${RESULTS}
+```
+
+Finally, run the collate script:
+```
+$ python 2-collate-results.py -wd ${RESULTS}
+```
