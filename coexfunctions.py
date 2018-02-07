@@ -1,4 +1,4 @@
-#!/opt/local/bin/python
+#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 version = 'v1.21'
 

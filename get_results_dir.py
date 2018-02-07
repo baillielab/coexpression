@@ -1,4 +1,4 @@
-#!/opt/local/bin/python
+#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 
 '''Quick hack to get (generated) name of results directory
