@@ -8,7 +8,7 @@ production version of the script, but for now we have shared the
 version of the code that we used for the analyses in the paper. 
 It is far from perfect, but if you follow these instructions you 
 should be able to replicate our findings, and generate your own. 
-Please contact us through coexpression.net or GitHub if you have any 
+Please contact us through http://coexpression.net or GitHub if you have any 
 problems.
 
 Please refer to the supplementary methods for (http://biorxiv.org/content/early/2016/12/20/095349) for a full explanation of the method used here.
