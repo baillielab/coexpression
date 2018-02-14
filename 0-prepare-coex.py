@@ -169,7 +169,7 @@ collationcommandfile = os.path.join(working_files_dir, "collationcommandfile.txt
 storage_dir_permutations = os.path.join(working_files_dir, "permutation_store")
 thisqueue = os.path.join("%s/%s.queue" % (working_files_dir, supplementary_label))
 settingsfile = os.path.join(working_files_dir, "settings.txt")
-sofile = os.path.join(coexappdir, 'coexpression_v2.so')
+sofile = os.path.join(coexappdir, './coexpression_v2.so') # './' needed for cdll.LoadLibrary(sofile) below
 if not os.path.exists(sofile):
     cmd = "gcc -shared  -O3 -fPIC -fopenmp %scoexpression_v2.c -o %scoexpression_v2.so" % (
         coexappdir, coexappdir)
