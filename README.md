@@ -8,15 +8,17 @@ production version of the script, but for now we have shared the
 version of the code that we used for the analyses in the paper. 
 It is far from perfect, but if you follow these instructions you 
 should be able to replicate our findings, and generate your own. 
-Please contact us through coexpression.net or GitHub if you have any 
+Please contact us through http://coexpression.net or GitHub if you have any 
 problems.
 
 Please refer to the supplementary methods for (http://biorxiv.org/content/early/2016/12/20/095349) for a full explanation of the method used here.
 
+---
 ## TO DO
 
 Add in additional info from https://raw.githubusercontent.com/baillielab/coexpression/master/README.md
 
+---
 ## How to install
 
 ### Requirements
@@ -25,17 +27,43 @@ The coexpression code is mainly written in Python 2.7. Some code is written in C
 
 * gcc (4.8.x recommended)
 * [bedtools](https://bedtools.readthedocs.io) (2.x recommended)
+* supplementary files (see below)
 
+### Compile C code
+
+Compile the C code with `gcc`:
+```
+$ gcc -shared  -O3 -fPIC -fopenmp coexpression_v2.c -o coexpression_v2.so
+```
 
 ### Python dependencies
 
 An [Anaconda Python environment](https://www.anaconda.com/download) is recommended. The `environment.yml` file contains the Python dependencies. 
 
-Create a conda enviroment:
+To create a conda enviroment, called 'coexpression':
 ```
 $ conda env create -f environment.yml
 $ source activate coexpression
 ```
+
+### Configuration
+
+The file `app.cfg` contains configuration information. This file needs to be changed to point at your copy of bedtools:
+
+```
+[directorypaths]
+sourcefilesdir = ../supfiles-coex/
+resdir = ../results-coex/
+pathtobedtools = /path/to/bedtools
+f5resource = http://fantom.gsc.riken.jp/zenbu/gLyphs/#config=ne92nJ20PhPv5ziW90qnND;loc=hg19::
+```
+
+### Supplementary files
+
+Supplementary files should be downloaded from https://coexpression.roslin.ed.ac.uk/supportingfiles/supportingfiles.tar.gz 
+and gunzipped into the directory `../supfiles-coex`. (The location of this directory can be changed in `app.cfg`.)
+
+---
 
 ## Example usage
 
