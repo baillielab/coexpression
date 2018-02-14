@@ -1,6 +1,5 @@
 # coexpression
 
----
 ## Network density analysis to detect coexpression within genome-wide data
 
 This script is the development version of the network density analysis 
@@ -28,10 +27,11 @@ The coexpression code is mainly written in Python 2.7. Some code is written in C
 
 * gcc (4.8.x recommended)
 * [bedtools](https://bedtools.readthedocs.io) (2.x recommended)
+* supplementary files (see below)
 
 ### Compile C code
 
-To compile the C code:
+Compile the C code with `gcc`:
 ```
 $ gcc -shared  -O3 -fPIC -fopenmp coexpression_v2.c -o coexpression_v2.so
 ```
@@ -40,7 +40,7 @@ $ gcc -shared  -O3 -fPIC -fopenmp coexpression_v2.c -o coexpression_v2.so
 
 An [Anaconda Python environment](https://www.anaconda.com/download) is recommended. The `environment.yml` file contains the Python dependencies. 
 
-Create a conda enviroment:
+To create a conda enviroment, called 'coexpression':
 ```
 $ conda env create -f environment.yml
 $ source activate coexpression
@@ -61,7 +61,7 @@ f5resource = http://fantom.gsc.riken.jp/zenbu/gLyphs/#config=ne92nJ20PhPv5ziW90q
 ### Supplementary files
 
 Supplementary files should be downloaded from https://coexpression.roslin.ed.ac.uk/supportingfiles/supportingfiles.tar.gz 
-and gunzipped into a directory `../supfiles-coex`. The location of this directory can be changed in `app.cfg`.
+and gunzipped into the directory `../supfiles-coex`. (The location of this directory can be changed in `app.cfg`.)
 
 ---
 
