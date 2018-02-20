@@ -69,13 +69,19 @@ and gunzipped into the directory `../supfiles-coex`. (The location of this direc
 
 First, run the prepare script:
 ```
-$ python 0-prepare-coex.py -po -n 100 -w 2000 -p backcirc -f ${INPUT_FILE} -b ${BACKGROUND_FILE} 
+$ python 0-prepare-coex.py -po -n 100 -w 300 -p backcirc -f ${INPUT_FILE} -b ${BACKGROUND_FILE} 
 ```
-this will create a directory called `../results-coex/BLAH`. Then for each of the permutations run:
+this will create an output directory in `../results-coex/` (configurable in `app.cfg`), named according to the input filenames and command-line arguments 
+used. 
+
+The prepare script creates one `.bed` file for each permutation (the number of permutations is specified by the `-n` option).
+
+Each permutation can be run independently, e.g. to run the first (n=0):
 
 ```
-$ RESULTS=../results-coex/BLAH
-$ python 1-make-network.py -mf ${RESULTS}/permutation_store/f5ep300_100.NNNNNN.bed -wd ${RESULTS}
+$ RESULTS=../results-coex/name_of_results_directory
+$ N=0
+$ python 1-make-network.py -mf ${RESULTS}/permutation_store/f5ep300_100.$N.bed -wd ${RESULTS}
 ```
 
 Finally, run the collate script:
