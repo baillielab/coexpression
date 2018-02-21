@@ -73,31 +73,23 @@ Output files will be written to the directory: `../results-coex/test_complete_CI
 
 The prepare script, `0-prepare-coex.py` takes the following options:
 
-* `-f` specify the input file (modified bed format) containing the test set of interest 
-* `-b` path to background file (modified bed format) detailing ALL variants genotypes in a particular study 
-* `-n` number of permutations to run 
-* `-t` number of threads to use 
-* `-x` specify the expression data file (table of expression values for each FANTOM5 promoter/enhancer) 
-* `-j` specify the empirical p-value for correlation at which nearby promoters/enhancers are taken to belong to the same group (see supplementary methods) 
-* `-e` user@example.
-com user email address for notification 
+* `-f` [REQUIRED] specify the input file (modified bed format) containing the test set of interest - that is, the genomic locations of SNPs associated with a given phenotype
 * `-p` the permutation mode: 'circular', 'post', 'backcirc' or 'background'. Default is 'circular'
-* (old - delete this line?)`-g` use circular permutations on the background file (recommended) 
-* (old - delete this line?)`-p` use post-mapping permutations only (less powerful, eliminates enrichment signal) 
+* `-b` path to background file (modified bed format) detailing ALL variants genotypes in a particular study 
+* `-n` number of permutations to run - default is 100
+* `-t` number of threads to use 
+* `-x` specify an expression data file (table of expression values for each feature - in the default mode, features are FANTOM5 TSS) - must match up to feature bed file
+* `-q` specify an feature bed data file (table of genomic locations for each feature - in the default mode, features are FANTOM5 TSS) - must match up to expression data file
+* `-w` a window size in base pairs around each TSS (or other input region). SNPs mapping within this window are taken to label a given TSS (or other input region) as being putatively phenotye-associated.
+* `-j` specify the empirical p-value for correlation at which nearby promoters/enhancers are taken to belong to the same group (see supplementary methods) 
+* `-e` user@example.com user email address for notification 
 * `-v` verbose mode 
 * `-a` include anticorrelations 
 * `-i` don't use iterative removal of the most significantly-coexpressed regions (carries risk of false-positives) 
 * `-z` don't use existing permutations already calculated on previous runs of this script
-* `-w` window size...
 * `-po` prepare only: stop after preparation step to allow each permutation to be run separately (and possibly in parallel)
 * `-cm` correlation measure: 'Spearman' or 'Pearson'. Default is 'Spearman'
-* `-s`
-* `-q`
-* `-y` (do we need this option?)
-* `-l`
-* `-u`
-* `-r`
-* `-m`
+* `-s` precision of node-specific p-value. Default is 1 (perfect), values closer to zero will save time. 
 
 The scripts `1-make-network.py` and `2-collate-results.py` take options:
 
