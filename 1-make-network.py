@@ -43,7 +43,7 @@ parser.add_argument('-ss', '--soft_separation',type=int, default=100000,help='fi
 args = parser.parse_args()
 module = sys.modules[__name__]
 for name, value in vars(args).iteritems():
-    print name, value
+    # print name, value
     setattr(module, name, value)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # GET SETTINGS
@@ -220,7 +220,6 @@ if use_specific_p:
         ptcf_sample = ptcf
         # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         # CALCULATE ALL CORRELATIONS
-    print "starting phase 1"
     tt_c1 = timeit.default_timer()
     for i in range(len(promoters)):
         jrange = range(len(ptcf_sample))  # asymmetrical matrix for node specific pval
@@ -230,14 +229,11 @@ if use_specific_p:
                 prombidx_all.append(promindex_lookup[ptcf_sample[j]])
     if verbose: print ("added", len(prombidx_all), "correlations to correlation index")
     tt_c2 = timeit.default_timer()
-    print "phase 1 done", tt_c2 - tt_c1
 
-    print "starting phase 2"
     nPromPairs = len(promaidx_all)
     idxa_all_c = (c_int * nPromPairs)(*promaidx_all)
     idxb_all_c = (c_int * nPromPairs)(*prombidx_all)
     tt_c3 = timeit.default_timer()
-    print "phase 2 done", tt_c3 - tt_c2
 
     # ctype data structure to hold results
     result_all_c = (c_double * nPromPairs)()
@@ -250,20 +246,16 @@ if use_specific_p:
                             c_int(nPromPairs), \
                             c_int(entrylen))
     tt_c4 = timeit.default_timer()
-    print "phase 3 done", tt_c4 - tt_c3
 
-    print "starting phase 4"
     # set the NANs to -99, and store all in python list
     AGcorrelations = []
     for x in range(nPromPairs):
-        print x, result_all_c[x]
         if math.isnan(result_all_c[x]):
             correlation = -99
         else:
             correlation = result_all_c[x]
         AGcorrelations.append(correlation)
     tt_c5 = timeit.default_timer()
-    print "phase 4 done", tt_c5 - tt_c4
 
     # ++++++++++++++++++++++++++++++++++++
     ip = 0
@@ -275,7 +267,6 @@ if use_specific_p:
                 ip = ip + 1
         nodespecificcorrelationlists[promoters[i]].sort()  # this is essential so that p-vals can be calculated.
     tt_c6 = timeit.default_timer()
-    print "phase 5 done", tt_c6 - tt_c5
     # ++++++++++++++++++++++++++++++++++++
     if recordedges:
         scatter_pairs.append("realdatanow")
@@ -284,7 +275,6 @@ if use_specific_p:
         scatter_nsp.append("realdatanow")
         # ++++++++++++++++++++++++++++++++++++
     tt_p2 = timeit.default_timer()
-    print "pval prep done in:", tt_p2 - tt_p1
 ttb = timeit.default_timer()
 ip = 0
 
@@ -344,7 +334,7 @@ for i in range(len(promoters)):
                     individualscores[prom2][prom1] = log_edge_p
             ip = ip + 1
         tt_l2 = timeit.default_timer()
-        print 'loop done. [{} of {}] [{} of {}] time={}'.format(i, len(promoters), j, len(promoters), tt_l2 - tt_l1)
+        if verbose: print 'loop done. [{} of {}] [{} of {}] time={}'.format(i, len(promoters), j, len(promoters), tt_l2 - tt_l1)
 
 ttc = timeit.default_timer()
 # -------------------------------------#
@@ -357,7 +347,7 @@ all_proms = list(set(all_proms))
 # 
 # check if this made a difference
 commontoboth = set(all_proms) & set(promoters)
-print "promoters:%s common:%s all_proms:%s " % (len(promoters), len(commontoboth), len(all_proms))
+if verbose: print "promoters:%s common:%s all_proms:%s " % (len(promoters), len(commontoboth), len(all_proms))
 # 
 
 # -------------------------------------#
@@ -525,11 +515,7 @@ for prom in seedstoprune:
 
 permtimer2 = timeit.default_timer()
 
-print "prep", tta - permtimer
-print "loop1", ttb - tta
-print "loop2", ttc - ttb
-print "end", permtimer2 - ttc
-print "all", permtimer2 - permtimer
+if verbose: print "all", permtimer2 - permtimer
 
 if verbose: print ("**********s**********")
 if verbose: print ("results:", [round(x, 1) for x in sorted(indmeasure.values())])

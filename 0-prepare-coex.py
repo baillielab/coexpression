@@ -117,11 +117,6 @@ promoter_details = os.path.join(sourcefilesdir, "METADATA_U22_ENHANCERS")
 feature_coordinates = os.path.join(sourcefilesdir, "f5ep300_100.bed")
 expression_file = os.path.join(sourcefilesdir, "f5ep_ptt_condense.expression")
 windowbed = os.path.join(pathtobedtools, "windowBed")
-# schedulefiles 
-schedulefilesdir = os.path.join(coexappdir, "schedulefiles")
-recordfile = os.path.join(schedulefilesdir, 'already_run.sch')
-alivefile = os.path.join(schedulefilesdir, 'alive.sch')
-restartfile = os.path.join(schedulefilesdir, 'start.sch')
 # correlation files
 expfilename = string.split(expression_file, "/")[-1]
 if correlationmeasure == "Pearson":
@@ -185,7 +180,7 @@ edgestore = os.path.join(working_files_dir, "edgestore_%s.txt" % (supplementary_
 if seedfile != "none":
     seedfile = os.path.join(sourcefilesdir, seedfile)
 # -------------------------------------------------------------------------------
-for thisdir in [working_files_dir, storage_dir_permutations, schedulefilesdir, resdir]:
+for thisdir in [working_files_dir, storage_dir_permutations, resdir]:
     check_dir(thisdir)
 t = open(thisqueue, "w")
 t.write("Job started %s" % (str(datetime.datetime.now())))

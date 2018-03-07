@@ -302,14 +302,14 @@ if write_layout_file == "yes":
                     except:
                         try:
                             indjoined[prom1sub]
-                            print prom1sub, "in indjoined"
+                            if verbose: print prom1sub, "in indjoined"
                             try:
                                 indjoined[prom1sub][prom2sub]
-                                print prom2sub, "in indjoined[%s]" % prom1sub
+                                if verbose: print prom2sub, "in indjoined[%s]" % prom1sub
                             except:
-                                print prom2sub, "not in indjoined[%s]" % prom1sub
+                                if verbose: print prom2sub, "not in indjoined[%s]" % prom1sub
                         except:
-                            print prom1sub, "not in indjoined"
+                            if verbose: print prom1sub, "not in indjoined"
 
 o = open(networkfile, 'w')
 o.write('<? header("Access-Control-Allow-Origin: http://baillielab.net")?>\nsource\ttarget\tvalue\n')
