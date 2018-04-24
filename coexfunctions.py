@@ -156,14 +156,14 @@ class ExpressionDict(dict):
 def read_expression_file(filename):
     """Read expression file into a dict-like datastructure (an instance of ExpressionDict)
 
-    This function assumes there is one header row and one label column named 'sample', e.g.:
+    This function assumes the file has one header row and one label column named 'sample', e.g.:
 
     sample                        thyroid_fetal  medulla_oblongata_newborn ...
     chr10:100013403..100013414,-  0.0            0.0                       ...
     chr10:100027943..100027958,-  1.01058594479  0.349270596499            ...
     ...
 
-    The seperator is assumed to be white space (although pandas tries to determine this by inspection)
+    The separator is assumed to be white space (although pandas tries to determine this by inspection)
 
     Returns: the ExpressionDict and column names in the header line
     """
