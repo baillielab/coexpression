@@ -121,69 +121,70 @@ def get_address(gwad, masterchromrange, masterchromlist):
     return "chr1", 0
 
 
-def read_expression_file(filename, datastartcol='autodetect', datastartrow='autodetect', labelcol=0, labelrow=0):
-    '''returns dict of {name:[list_of_floats], ...}, header row, startcol, startrow'''
-    f = open(filename)
-    lines = [string.split(string.strip(x), '\t') for x in f.readlines()]
-    f.close()
-    checklines = lines[:10]  # these will be used to determine dsc and dsr.
-    firstfloatfailcols = []
-    for r, row in enumerate(checklines):
-        for c in range(len(row) - 1, -1, -1):
-            try:
-                float(row[c])
-            except:
-                if row[c] != "NA":
-                    # print "unfloatable", "row",r,"col", c, checklines[r][c]
-                    firstfloatfailcols.append(c + 1)
-                    break
-    if len(firstfloatfailcols) > 0:
-        dsc = firstfloatfailcols[-1]
-        for r in range(len(firstfloatfailcols) - 1, -1, -1):
-            if firstfloatfailcols[r] != dsc:
-                # print "first floatfailcol inconsistency indicating data starts above row", r, firstfloatfailcols[r]
-                dsr = r + 1
-                break
-        try:
-            dsr
-        except:
-            dsr = 0  # if data starts in row 0 then this won't be detected above
-    else:
-        dsr = 0  # necessary in case firstfloatfailcols is empty
-        dsc = 0
-    if datastartcol == 'autodetect':
-        datastartcol = dsc
-    else:
-        datastartcol = int(datastartcol)
-        if datastartcol != dsc:
-            print "datastartcol (%s) discrepancy with autodetect (%s)" % (datastartcol, dsc)
-    if datastartrow == 'autodetect':
-        datastartrow = dsr
-    else:
-        datastartrow = int(datastartrow)
-        if datastartrow != dsr:
-            print "datastartrow (%s) discrepancy with autodetect (%s)" % (datastartrow, dsr)
-    print "reading expression file from column:%s and row:%s" % (dsc, dsr)
-    exdic = {}
-    linelens = []
-    for i, line in enumerate(lines[datastartrow:]):
-        linelens.append(len(line))
-        try:
-            exdic[line[labelcol]]
-            print "duplicate label in expression file! ({}) taking first value".format(line[labelcol])
-            continue
-        except:
-            exdic[line[labelcol]] = []
-        for j, x in enumerate(line[datastartcol:]):
-            try:
-                exdic[line[labelcol]].append(float(x))
-            except:
-                exdic[line[labelcol]].append('NA')
-    linelens = sorted(list(set(linelens)))
-    if len(linelens) > 1:
-        print "Be aware: {} different line lengths in expressin file ({})".format(len(linelens),
-                                                                                  ','.join([str(x) for x in linelens]))
-    return exdic, lines[labelrow][datastartcol:]
+class ExpressionDict(dict):
+    """Minimal dictionary-like object that takes a promoter as a key and returns expression values as a list
+
+    The class stores
+      1) expression values as a 2D NumPy array
+      2) a promoter to index mapping to allow a lookup into the expression values array
+
+    A lookup is two-stage: promoter -> integer index -> row in expression array (see __getitem__)
+
+    Note: a number of member functions that a dict class relies on have not been implemented
+    The only things that *should* be done with this class are:
+      - initialisation:  mydict = ExpressionDict(promoters, expressions)
+      - lookup:          expression = mydict['chr14:105953526..105953541,+']
+      - length:          len(mydict)
+    """
+
+    def __init__(self, promoters, expressions):
+        promoter_to_index = {k: v for v, k in enumerate(promoters)}
+        super(ExpressionDict, self).__init__(promoter_to_index)
+        self.expressions = expressions
+
+    def __getitem__(self, key):
+        # Lookup promoter by calling base class
+        index = super(ExpressionDict, self).__getitem__(key)
+        # Return expression values, as a list for backwards compatibility
+        return list(self.expressions[index])
+
+    def __setitem__(self, key, value):
+        # Cannot add to this dictionary
+        raise IndexError('New items cannot be inserted into ExpressionDict objects.')
+
+
+def read_expression_file(filename):
+    """Read expression file into a dict-like datastructure (an instance of ExpressionDict)
+
+    This function assumes there is one header row and one label column named 'sample', e.g.:
+
+    sample                        thyroid_fetal  medulla_oblongata_newborn ...
+    chr10:100013403..100013414,-  0.0            0.0                       ...
+    chr10:100027943..100027958,-  1.01058594479  0.349270596499            ...
+    ...
+
+    The seperator is assumed to be white space (although pandas tries to determine this by inspection)
+
+    Returns: the ExpressionDict and column names in the header line
+    """
+
+    # Read expression file into DataFrame,
+    df = pd.read_table(filename, header=0)
+    assert ('sample' in df.columns)
+
+    # Drop columns with any NAs
+    df.dropna(axis=1, inplace=True)
+
+    # Drop duplicate rows (row labels), keeping the first occurrence
+    df.drop_duplicates(subset='sample', keep='first', inplace=True)
+
+    # Extract promoters, values and header from DataFrame
+    df.set_index('sample', inplace=True)
+    promoters = list(df.index)
+    expression_values = df.values
+    header = list(df.columns.values)
+
+    return ExpressionDict(promoters, expression_values), header
 
 
 def readfeaturecoordinates(featfile):
