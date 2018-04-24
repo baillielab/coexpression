@@ -148,9 +148,18 @@ class ExpressionDict(dict):
         # Return expression values, as a list for backwards compatibility
         return list(self.expressions[index])
 
+    # The following methods have not been implemented
     def __setitem__(self, key, value):
-        # Cannot add to this dictionary
-        raise IndexError('New items cannot be inserted into ExpressionDict objects.')
+        raise NotImplementedError()
+
+    def __iter__(self):
+        raise NotImplementedError()
+
+    def values(self):
+        raise NotImplementedError()
+
+    def items(self):
+        raise NotImplementedError()
 
 
 def read_expression_file(filename):
