@@ -43,7 +43,7 @@ parser.add_argument('-ss', '--soft_separation',type=int, default=100000,help='fi
 args = parser.parse_args()
 module = sys.modules[__name__]
 for name, value in vars(args).iteritems():
-    # print name, value
+    print name, value
     setattr(module, name, value)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # GET SETTINGS
@@ -70,7 +70,7 @@ import ConfigParser
 
 pathtocoexapp = inspect.stack()[0][1]
 coexappdir = os.path.split(os.path.abspath(pathtocoexapp))[0]
-config = ConfigParser.RawConfigParser()
+config = ConfigParser.RawConfigParser(allow_no_value=True)
 config.read(os.path.join(coexappdir, 'app.cfg'))
 sourcefilesdir = config.get('directorypaths', 'sourcefilesdir')
 resdir = config.get('directorypaths', 'resdir')
@@ -81,14 +81,14 @@ storage_dir_perm_results = os.path.join(working_files_dir, "perm_results_store")
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # READ INPUT FILES
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-sofile = os.path.join(sourcefilesdir, 'coexpression_v2.so')
+sofile = os.path.join(coexappdir, 'coexpression_v2.so')
 coexpression = cdll.LoadLibrary(sofile)
 if verbose: print "sofile read"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 exp_dict, header = read_expression_file(expression_file)
 if verbose: print "expression file read"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-prom_addresses, feature_dict = readfeaturecoordinates(feature_coordinates)
+prom_addresses, feature_dict, sl = readfeaturecoordinates(feature_coordinates)
 if verbose: print "feature_coordinates read"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 f = open(correlationfile)
@@ -220,6 +220,7 @@ if use_specific_p:
         ptcf_sample = ptcf
         # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         # CALCULATE ALL CORRELATIONS
+    if verbose: print "starting phase 1"
     tt_c1 = timeit.default_timer()
     for i in range(len(promoters)):
         jrange = range(len(ptcf_sample))  # asymmetrical matrix for node specific pval
@@ -229,11 +230,14 @@ if use_specific_p:
                 prombidx_all.append(promindex_lookup[ptcf_sample[j]])
     if verbose: print ("added", len(prombidx_all), "correlations to correlation index")
     tt_c2 = timeit.default_timer()
+    if verbose: print "phase 1 done", tt_c2 - tt_c1
 
+    if verbose: print "starting phase 2"
     nPromPairs = len(promaidx_all)
     idxa_all_c = (c_int * nPromPairs)(*promaidx_all)
     idxb_all_c = (c_int * nPromPairs)(*prombidx_all)
     tt_c3 = timeit.default_timer()
+    if verbose: print "phase 2 done", tt_c3 - tt_c2
 
     # ctype data structure to hold results
     result_all_c = (c_double * nPromPairs)()
@@ -246,7 +250,9 @@ if use_specific_p:
                             c_int(nPromPairs), \
                             c_int(entrylen))
     tt_c4 = timeit.default_timer()
+    if verbose: print "phase 3 done", tt_c4 - tt_c3
 
+    if verbose: print "starting phase 4"
     # set the NANs to -99, and store all in python list
     AGcorrelations = []
     for x in range(nPromPairs):
@@ -256,6 +262,7 @@ if use_specific_p:
             correlation = result_all_c[x]
         AGcorrelations.append(correlation)
     tt_c5 = timeit.default_timer()
+    if verbose: print "phase 4 done", tt_c5 - tt_c4
 
     # ++++++++++++++++++++++++++++++++++++
     ip = 0
@@ -267,6 +274,7 @@ if use_specific_p:
                 ip = ip + 1
         nodespecificcorrelationlists[promoters[i]].sort()  # this is essential so that p-vals can be calculated.
     tt_c6 = timeit.default_timer()
+    if verbose: print "phase 5 done", tt_c6 - tt_c5
     # ++++++++++++++++++++++++++++++++++++
     if recordedges:
         scatter_pairs.append("realdatanow")
@@ -275,6 +283,7 @@ if use_specific_p:
         scatter_nsp.append("realdatanow")
         # ++++++++++++++++++++++++++++++++++++
     tt_p2 = timeit.default_timer()
+    if verbose: print "pval prep done in:", tt_p2 - tt_p1
 ttb = timeit.default_timer()
 ip = 0
 
@@ -514,12 +523,15 @@ for prom in seedstoprune:
 # _______________________________________________________________________________________
 
 permtimer2 = timeit.default_timer()
+if verbose: 
+    print "prep", tta - permtimer
+    print "loop1", ttb - tta
+    print "loop2", ttc - ttb
+    print "end", permtimer2 - ttc
+    print "all", permtimer2 - permtimer
 
-if verbose: print "all", permtimer2 - permtimer
-
-if verbose: print ("**********s**********")
-if verbose: print ("results:", [round(x, 1) for x in sorted(indmeasure.values())])
-if verbose: print ("**********s**********")
+if verbose: print ("********** 1-make-network.py results **********")
+if verbose: print ("indmeasures:", [round(x, 1) for x in sorted(indmeasure.values())])
 
 # _______________________________________________________________________________________
 

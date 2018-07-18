@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-version = 'v1.21'
+version = 'v1.23'
 
 # duplicated imports
 import math
 import os
 import string
+import json
 from bisect import *
+from datetime import datetime
 
 import matplotlib.pyplot as plt
 # unique imports
@@ -14,7 +16,7 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 from scipy import stats
-
+import subprocess
 
 def getversion():
     return version
@@ -29,20 +31,11 @@ def check_dir(this_dir):
         os.mkdir(this_dir)
     fix_permissions(this_dir)
 
-
 # ------------------------------------
 def readsettings(wfd):
     f = open(os.path.join(wfd, 'settings.txt'))
-    lines = [string.split(string.strip(x), '\t') for x in f.readlines()]
+    thesesettings = json.load(f)
     f.close()
-    thesesettings = {}
-    for line in lines:
-        if len(line) == 0:
-            continue
-        if len(line) == 1:
-            thesesettings[line[0]] = ''
-        if len(line) > 1:
-            thesesettings[line[0]] = '\t'.join(line[1:])
     for s in thesesettings:
         try:
             thesesettings[s] = float(thesesettings[s])
@@ -54,7 +47,6 @@ def readsettings(wfd):
         except:
             pass
     return thesesettings
-
 
 def str2bool(v):
     if v.lower() == "false":
@@ -92,7 +84,7 @@ def readoptions(cmd):
 
 # ------------------------------------
 
-def get_gwad(chrom, address, masterchromrange):
+def get_gwad(chrom, address, masterchromrange, verbosefunction=False):
     '''get a single number to identify this position on a concatentated genome'''
     try:
         masterchromrange[chrom]
@@ -102,10 +94,10 @@ def get_gwad(chrom, address, masterchromrange):
     if (masterchromrange[chrom][0] + address) < masterchromrange[chrom][1] or address < 0:
         return masterchromrange[chrom][0] + address
     else:
-        if verbose: print ("error finding address - address is not on chromosome", chrom, address)
+        if verbosefunction: print ("error finding address - address is not on chromosome", chrom, address)
 
 
-def get_address(gwad, masterchromrange, masterchromlist):
+def get_address(gwad, masterchromrange, masterchromlist, verbosefunction=False):
     '''go from gwad to chrom and position'''
     genome_max = masterchromrange[masterchromlist[-1]][1]  # the highest value of all
     # first bring the value into range
@@ -117,11 +109,15 @@ def get_address(gwad, masterchromrange, masterchromlist):
         if gwad > start and gwad <= end:
             address = gwad - start
             return chrom, address
-    if verbose: print ("***** ERROR NEEDS ATTENTION: address not found for gwad:", gwad)
+    if verbosefunction: print ("***** ERROR NEEDS ATTENTION: address not found for gwad:", gwad)
     return "chr1", 0
 
+def read_column_fast(filepath, column_index=0):
+    cmd = "awk '{print $" + str(column_index+1) + "}' " + str(filepath)
+    p = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
+    return string.split(p.stdout.read(),'\n')
 
-def read_expression_file(filename, datastartcol='autodetect', datastartrow='autodetect', labelcol=0, labelrow=0):
+def read_expression_file_auto(filename, datastartcol='autodetect', datastartrow='autodetect', labelcol=0, labelrow=0, verbosefunction=False):
     '''returns dict of {name:[list_of_floats], ...}, header row, startcol, startrow'''
     f = open(filename)
     lines = [string.split(string.strip(x), '\t') for x in f.readlines()]
@@ -163,7 +159,7 @@ def read_expression_file(filename, datastartcol='autodetect', datastartrow='auto
         datastartrow = int(datastartrow)
         if datastartrow != dsr:
             print "datastartrow (%s) discrepancy with autodetect (%s)" % (datastartrow, dsr)
-    print "reading expression file from column:%s and row:%s" % (dsc, dsr)
+    if verbosefunction: print "reading expression file from column:%s and row:%s" % (dsc, dsr)
     exdic = {}
     linelens = []
     for i, line in enumerate(lines[datastartrow:]):
@@ -181,10 +177,25 @@ def read_expression_file(filename, datastartcol='autodetect', datastartrow='auto
                 exdic[line[labelcol]].append('NA')
     linelens = sorted(list(set(linelens)))
     if len(linelens) > 1:
-        print "Be aware: {} different line lengths in expressin file ({})".format(len(linelens),
+        print "Be aware: {} different line lengths in expression file ({})".format(len(linelens),
                                                                                   ','.join([str(x) for x in linelens]))
     return exdic, lines[labelrow][datastartcol:]
 
+def read_expression_file(filename):
+    '''returns dict of {name:[list_of_floats], ...}, header row, startcol, startrow'''
+    f = open(filename)
+    lines = [string.split(string.strip(x), '\t') for x in f.readlines()]
+    f.close()
+    exdic = {}
+    for i, line in enumerate(lines[1:]):
+        try:
+            exdic[line[0]]
+            print "duplicate label in expression file! ({}) taking first value".format(line[labelcol])
+            continue
+        except:
+            pass
+        exdic[line[0]] = [float(x) for x in line[1:]]
+    return exdic, lines[1:][1:]
 
 def readfeaturecoordinates(featfile):
     f = open(featfile)
@@ -193,6 +204,7 @@ def readfeaturecoordinates(featfile):
     go = "no"
     pa = {}
     fd = {}
+    sl = []
     # prog=range(0,len(lines),max(int(float(len(lines))/10),1))
     for i in range(len(lines)):  # each line is a feature (ie a TSS region)
         # if i in prog: print i, "of", len(lines)
@@ -211,6 +223,7 @@ def readfeaturecoordinates(featfile):
         start = int(line[1])
         end = int(line[2])
         pa[label] = [chrom, start, end]
+        sl.append(label)
         st = min(start, end)
         en = max(start, end)
         try:
@@ -223,7 +236,7 @@ def readfeaturecoordinates(featfile):
                 fd[chrom][st] = en
         except:
             fd[chrom][st] = en
-    return pa, fd
+    return pa, fd, sl
 
 
 def join_nearby(thesepromoters, theseaddresses, globcors, this_exp_dict, pvtj=0.1, cormeasure="Spearman",
@@ -235,7 +248,8 @@ def join_nearby(thesepromoters, theseaddresses, globcors, this_exp_dict, pvtj=0.
     promGrpGraph = nx.Graph()  # creates graph promGrpGraph
     # creates DataFrame: index = promoter name, columns = chromosome, start, end
     a = pd.DataFrame({k: theseaddresses[k] for k in thesepromoters}, index=['chromosome', 'start', 'end']).T
-    a.sort(['chromosome', 'start', 'end'], inplace=True)  # sorts DataFrame inplace - VERY IMPORTANT
+    # sort DataFrame inplace - VERY IMPORTANT
+    a.sort(['chromosome', 'start', 'end'], inplace=True)  
     for chrom in pd.unique(a.chromosome):
         grps = np.fromiter(merge_ranges(a[a.chromosome == chrom][['start', 'end']].values, softsep), dtype='i8,i8')
         for grp_start, grp_end in grps:
@@ -409,7 +423,7 @@ def remove_overlap(thisdict):
     return newdict
 
 
-def qq_plot(real, rand, filename):
+def qq_plot(real, rand, filename, verbosefunction=False):
     if len(rand) == 0:
         if verbosefunction: print ("empty rand list for qq")
         return "empty"
@@ -454,4 +468,20 @@ def qq_plot(real, rand, filename):
         plt.xlim(0, max(expected) + 1)
         plt.ylim(0, max(observed) + 1)
         fig.savefig("%s.svg" % (filename))
-        # ----------------------------
+
+
+def writequeue(thistext, queuefile):
+    if not os.path.exists(queuefile):
+        o=open(queuefile,'w')
+        o.write('')
+        o.close()
+    o=open(queuefile,'a')
+    o.write("{:%Y-%m-%d %H:%M}\t{}\n".format(datetime.now(), thistext))
+    o.close()
+
+
+
+
+
+
+

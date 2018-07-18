@@ -2,7 +2,6 @@
 # -*- coding: UTF-8 -*-
 
 from coexfunctions import *
-
 version = getversion()
 
 import sys, string, os
@@ -50,7 +49,7 @@ import ConfigParser
 
 pathtocoexapp = inspect.stack()[0][1]
 coexappdir = os.path.split(os.path.abspath(pathtocoexapp))[0]
-config = ConfigParser.RawConfigParser()
+config = ConfigParser.RawConfigParser(allow_no_value=True)
 config.read(os.path.join(coexappdir, 'app.cfg'))
 sourcefilesdir = config.get('directorypaths', 'sourcefilesdir')
 resdir = config.get('directorypaths', 'resdir')
@@ -260,22 +259,21 @@ o2.write(outputfilecontents)
 o2.close()
 
 # -------------------------------------#
-if True:
-    # write a summary of the coex evidence at every location considered
-    prom_addresses, feature_dict = readfeaturecoordinates(feature_coordinates)
-    allscoresfile = os.path.join(working_files_dir, "allscores.txt")
-    allscoresoutlist = []
-    for prom in joining_instructions:
-        allscoresoutlist.append([prom_addresses[prom][0], prom_addresses[prom][1], prom_addresses[prom][2], prom,
-                                 joining_instructions[prom], allpromoterscores[prom],
-                                 indmeasure[joining_instructions[prom]], fdrstore[joining_instructions[prom]]])
-    allscoresoutlist.sort(key=lambda x: int(x[1]))  # sort by start position
-    allscoresoutlist.sort(key=lambda x: int(x[0]))  # sort by chrom
-    o = open(allscoresfile, 'w')
-    o.write("chrom\tstart\tend\tname\tgroup_name\traw_coex\tgroup_coex\tgroup_FDR\n")
-    for thisline in allscoresoutlist:
-        o.write("%s\n" % ('\t'.join([str(x) for x in thisline])))
-    o.close()
+# write a summary of the coex evidence at every location considered
+prom_addresses, feature_dict, sl = readfeaturecoordinates(feature_coordinates)
+allscoresfile = os.path.join(working_files_dir, "allscores.txt")
+allscoresoutlist = []
+for prom in joining_instructions:
+    allscoresoutlist.append([prom_addresses[prom][0], prom_addresses[prom][1], prom_addresses[prom][2], prom,
+                             joining_instructions[prom], allpromoterscores[prom],
+                             indmeasure[joining_instructions[prom]], fdrstore[joining_instructions[prom]]])
+allscoresoutlist.sort(key=lambda x: int(x[1]))  # sort by start position
+allscoresoutlist.sort(key=lambda x: x[0])  # sort by chrom
+o = open(allscoresfile, 'w')
+o.write("chrom\tstart\tend\tname\tgroup_name\traw_coex\tgroup_coex\tgroup_FDR\n")
+for thisline in allscoresoutlist:
+    o.write("%s\n" % ('\t'.join([str(x) for x in thisline])))
+o.close()
 
 # -------------------------------------#
 # write big network file (for circos)
@@ -302,10 +300,8 @@ if write_layout_file == "yes":
                     except:
                         try:
                             indjoined[prom1sub]
-                            if verbose: print prom1sub, "in indjoined"
                             try:
                                 indjoined[prom1sub][prom2sub]
-                                if verbose: print prom2sub, "in indjoined[%s]" % prom1sub
                             except:
                                 if verbose: print prom2sub, "not in indjoined[%s]" % prom1sub
                         except:

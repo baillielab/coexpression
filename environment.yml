@@ -72,5 +72,4 @@ dependencies:
   - ipython-genutils==0.2.0
   - memory-profiler==0.43
   - prompt-toolkit==1.0.15
-prefix: /exports/cmvm/eddie/eb/groups/baillielab2/conda_envs/coexpression
 

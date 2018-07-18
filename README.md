@@ -8,7 +8,7 @@ production version of the script, but for now we have shared the
 version of the code that we used for the analyses in the paper. 
 It is far from perfect, but if you follow these instructions you 
 should be able to replicate our findings, and generate your own. 
-Please contact us through http://coexpression.net or GitHub if you have any 
+Please contact us through http://baillielab.net or GitHub if you have any 
 problems.
 
 Please refer to the supplementary methods for (http://biorxiv.org/content/early/2016/12/20/095349) for a full explanation of the method used here.
@@ -17,12 +17,14 @@ Please refer to the supplementary methods for (http://biorxiv.org/content/early/
 ## Installation
 
 ### Requirements
-
+Coexpression has been tested on linux machines and servers including a high-performance compute cluster running scientific linux 7.2. 
 The coexpression code is mainly written in Python 2.7. Some code is written in C and OpenMP. In addition to Python, you will need:
 
 * gcc (4.8.x recommended)
-* [bedtools](https://bedtools.readthedocs.io) (2.x recommended)
+* [bedtools](https://bedtools.readthedocs.io) (2.x recommended) NB path to bed tools must be specified in the config file.
+* awk [usually pre-installed on linux systems]
 * supplementary files (see below)
+
 
 ### Compile C code
 
@@ -43,14 +45,16 @@ $ source activate coexpression
 
 ### Configuration
 
-The file `app.cfg` contains configuration information. This file needs to be changed to point at your copy of bedtools:
+In the directory containing the scripts, create a file `app.cfg` which contains configuration information. This file needs to be changed to point at your copy of bedtools:
 
 ```
 [directorypaths]
 sourcefilesdir = ../supfiles-coex/
 resdir = ../results-coex/
-pathtobedtools = /path/to/bedtools
+pathtobedtools = '' 
+pathtopython = python
 f5resource = http://fantom.gsc.riken.jp/zenbu/gLyphs/#config=ne92nJ20PhPv5ziW90qnND;loc=hg19::
+
 ```
 
 ### Supplementary files
@@ -73,23 +77,30 @@ Output files will be written to the directory: `../results-coex/test_complete_CI
 
 The prepare script, `0-prepare-coex.py` takes the following options:
 
-* `-f` [REQUIRED] specify the input file (modified bed format) containing the test set of interest - that is, the genomic locations of SNPs associated with a given phenotype
-* `-p` the permutation mode: 'circular', 'post', 'backcirc' or 'background'. Default is 'circular'
+* `-f` specify the input file (modified bed format) containing the test set of interest 
 * `-b` path to background file (modified bed format) detailing ALL variants genotypes in a particular study 
-* `-n` number of permutations to run - default is 100
+* `-n` number of permutations to run 
 * `-t` number of threads to use 
-* `-x` specify an expression data file (table of expression values for each feature - in the default mode, features are FANTOM5 TSS) - must match up to feature bed file
-* `-q` specify an feature bed data file (table of genomic locations for each feature - in the default mode, features are FANTOM5 TSS) - must match up to expression data file
-* `-w` a window size in base pairs around each TSS (or other input region). SNPs mapping within this window are taken to label a given TSS (or other input region) as being putatively phenotye-associated.
+* `-x` specify the expression data file (table of expression values for each FANTOM5 promoter/enhancer) 
 * `-j` specify the empirical p-value for correlation at which nearby promoters/enhancers are taken to belong to the same group (see supplementary methods) 
-* `-e` user@example.com user email address for notification 
+* `-e` user@example.
+com user email address for notification 
+* `-p` the permutation mode: 'circular', 'post', 'backcirc' or 'background'. Default is 'circular'
+* (old - delete this line?)`-g` use circular permutations on the background file (recommended) 
+* (old - delete this line?)`-p` use post-mapping permutations only (less powerful, eliminates enrichment signal) 
 * `-v` verbose mode 
 * `-a` include anticorrelations 
 * `-i` don't use iterative removal of the most significantly-coexpressed regions (carries risk of false-positives) 
 * `-z` don't use existing permutations already calculated on previous runs of this script
+* `-w` window size...
 * `-po` prepare only: stop after preparation step to allow each permutation to be run separately (and possibly in parallel)
 * `-cm` correlation measure: 'Spearman' or 'Pearson'. Default is 'Spearman'
-* `-s` precision of node-specific p-value. Default is 1 (perfect), values closer to zero will save time. 
+* `-s`
+* `-q`
+* `-l`
+* `-u`
+* `-r`
+* `-m`
 
 The scripts `1-make-network.py` and `2-collate-results.py` take options:
 
