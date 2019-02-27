@@ -50,7 +50,7 @@ import ConfigParser
 pathtocoexapp = inspect.stack()[0][1]
 coexappdir = os.path.split(os.path.abspath(pathtocoexapp))[0]
 config = ConfigParser.RawConfigParser(allow_no_value=True)
-config.read(os.path.join(coexappdir, 'app.cfg'))
+config.read(storedesettings['config_file'])
 sourcefilesdir = config.get('directorypaths', 'sourcefilesdir')
 resdir = config.get('directorypaths', 'resdir')
 pathtobedtools = config.get('directorypaths', 'pathtobedtools')
@@ -67,12 +67,13 @@ snps_mapped = os.path.join(storage_dir_permutations, feature_label + ".%s.bed" %
 # read perm indmeasures
 interimfiles = os.listdir(storage_dir_perm_results)
 perm_indm = []
-for permresultsfile in [x for x in interimfiles if ".indmeasure." in x and not x.endswith('.0')]:
+permuted_indmeasure_files = [x for x in interimfiles if ".indmeasure." in x and not x.endswith('.0')]
+for permresultsfile in permuted_indmeasure_files:
     f = open(os.path.join(storage_dir_perm_results, permresultsfile))
     indmeasure = json.load(f)
     f.close()
     perm_indm += indmeasure.values()
-numperms = len(perm_indm)  # the actual number of perms completed
+num_completed_perms = len(permuted_indmeasure_files)  # the actual number of perms completed
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # read real data
 realdataresults = [x for x in interimfiles if x.endswith('.0')]
@@ -308,7 +309,7 @@ if write_layout_file == "yes":
                             if verbose: print prom1sub, "not in indjoined"
 
 o = open(networkfile, 'w')
-o.write('<? header("Access-Control-Allow-Origin: http://baillielab.net")?>\nsource\ttarget\tvalue\n')
+o.write('<? header("Access-Control-Allow-Origin: https://baillielab.net")?>\nsource\ttarget\tvalue\n')
 for c in already:
     avedge = float(sum(already[c])) / len(already[c])
     o.write("%s\t%s\n" % (c, avedge))
@@ -403,7 +404,7 @@ o.write("snps_searched\t%s\n" % (snp_count))
 o.write("tss_snps\t%s\n" % (len(tss_snps)))
 o.write("hpm_genome\t%s\n" % (hpm_genome))
 o.write("hpm_tss\t%s\n" % (hpm))
-o.write("numperms\t%s\n" % (numperms))
+o.write("numperms\t%s\n" % (num_completed_perms))
 o.write("nsp\t%s\n" % (nsp))
 # per range results
 o.write("allproms\t%s\n" % (len(allpromoterscores)))

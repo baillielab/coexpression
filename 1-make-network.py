@@ -2,12 +2,12 @@
 # -*- coding: UTF-8 -*-
 
 from coexfunctions import *
-
 version = getversion()
 
 import sys, timeit, string, os, operator
 from ctypes import *
 import json
+import resource
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 import argparse
@@ -23,23 +23,6 @@ parser.add_argument('-t', '--numthreads', type=int, default=1, help='numthreads 
 # optional / unnecessary
 parser.add_argument('-r', '--recordedges', action="store_true", default=False, help='recordedges')
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# OBSELETE : obtained from settings
-'''
-parser.add_argument('-st', '--selectionthreshold', type=float, default=0,help='selectionthreshold')
-parser.add_argument('-i', '--noiter',action="store_true", default=False,help='noiter')
-parser.add_argument('-a', '--anticorrelation',action="store_true", default=False,help='anticorrelation')
-parser.add_argument('-u', '--useaverage',action="store_true", default=False,help='use the average coexpression score (eliminates position enrichment signal)')
-parser.add_argument('-j', '--pval_to_join',type=float, default=0.1,help='pval_to_join')
-parser.add_argument('-s', '--nsp',type=float, default=1.0,help='node-specific pvalue in use; specify precision (1=perfect, 0=globaldistribution is used.)')
-parser.add_argument('-l', '--seedfile',default="none",help='seed file')
-parser.add_argument('-v', '--verbose',action="store_true", default=False,help='increases verbosity')
-parser.add_argument('-ef', '--expression_file',type=str, default='null',help='filepath')
-parser.add_argument('-fc', '--feature_coordinates',type=str, default='null',help='filepath')
-parser.add_argument('-cf', '--correlationfile',type=str, default='null',help='filepath')
-parser.add_argument('-sl', '--supplementary_label',type=str, default='null',help='supplementary_label')
-parser.add_argument('-cm', '--correlationmeasure',type=str, choices=['Spearman', 'Pearson'], default='Spearman',help='filepath')
-parser.add_argument('-ss', '--soft_separation',type=int, default=100000,help='filepath')
-'''
 args = parser.parse_args()
 module = sys.modules[__name__]
 for name, value in vars(args).iteritems():
@@ -67,11 +50,10 @@ selectionthreshold_is_j = storedesettings['selectionthreshold_is_j']
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 import inspect
 import ConfigParser
-
 pathtocoexapp = inspect.stack()[0][1]
 coexappdir = os.path.split(os.path.abspath(pathtocoexapp))[0]
 config = ConfigParser.RawConfigParser(allow_no_value=True)
-config.read(os.path.join(coexappdir, 'app.cfg'))
+config.read(storedesettings['config_file'])
 sourcefilesdir = config.get('directorypaths', 'sourcefilesdir')
 resdir = config.get('directorypaths', 'resdir')
 pathtobedtools = config.get('directorypaths', 'pathtobedtools')
@@ -85,8 +67,11 @@ sofile = os.path.join(coexappdir, 'coexpression_v2.so')
 coexpression = cdll.LoadLibrary(sofile)
 if verbose: print "sofile read"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-exp_dict, header = read_expression_file(expression_file)
-if verbose: print "expression file read"
+if verbose:
+    exp_dict, header = read_expression_file(expression_file, v=True)
+    print "expression file read"
+else:
+    exp_dict, header = read_expression_file(expression_file)
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 prom_addresses, feature_dict, sl = readfeaturecoordinates(feature_coordinates)
 if verbose: print "feature_coordinates read"
@@ -101,10 +86,11 @@ if verbose: print "global correlations read"
 # this will seed every network with the contents of seedfile, then remove them all before calculating
 lines = []
 if seedfile != "none":
-    f = open(seedfile)
-    lines = f.readlines()
-    f.close()
-    if verbose: print "seedfile read"
+    if os.path.exists(seedfile):
+        f = open(seedfile)
+        lines = f.readlines()
+        f.close()
+        if verbose: print "seedfile read"
 seedpromoters = []
 for line in lines:
     seedpromoters.append(string.split(string.strip(line), "\t")[-1])  # last entry in line is promoter (eg bedfile)
@@ -288,8 +274,8 @@ ttb = timeit.default_timer()
 ip = 0
 
 for i in range(len(promoters)):
+    tt_l1 = timeit.default_timer()
     for j in range(len(promoters)):  # NB must do this from both sides for nsp (ie not for j in range(i,len...))
-        tt_l1 = timeit.default_timer()
         if i != j:
             prom1 = promoters[i]
             prom2 = promoters[j]
@@ -342,8 +328,8 @@ for i in range(len(promoters)):
                     individualscores[prom2] = {}
                     individualscores[prom2][prom1] = log_edge_p
             ip = ip + 1
-        tt_l2 = timeit.default_timer()
-        if verbose: print 'loop done. [{} of {}] [{} of {}] time={}'.format(i, len(promoters), j, len(promoters), tt_l2 - tt_l1)
+    tt_l2 = timeit.default_timer()
+    if verbose: print 'loop done. [{} of {}] [{} of {}] time={}'.format(i, len(promoters), j, len(promoters), tt_l2 - tt_l1)
 
 ttc = timeit.default_timer()
 # -------------------------------------#

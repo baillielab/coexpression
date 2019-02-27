@@ -83,11 +83,8 @@ The prepare script, `0-prepare-coex.py` takes the following options:
 * `-t` number of threads to use 
 * `-x` specify the expression data file (table of expression values for each FANTOM5 promoter/enhancer) 
 * `-j` specify the empirical p-value for correlation at which nearby promoters/enhancers are taken to belong to the same group (see supplementary methods) 
-* `-e` user@example.
-com user email address for notification 
+* `-e` user@example.com user email address for notification 
 * `-p` the permutation mode: 'circular', 'post', 'backcirc' or 'background'. Default is 'circular'
-* (old - delete this line?)`-g` use circular permutations on the background file (recommended) 
-* (old - delete this line?)`-p` use post-mapping permutations only (less powerful, eliminates enrichment signal) 
 * `-v` verbose mode 
 * `-a` include anticorrelations 
 * `-i` don't use iterative removal of the most significantly-coexpressed regions (carries risk of false-positives) 
@@ -97,6 +94,7 @@ com user email address for notification
 * `-cm` correlation measure: 'Spearman' or 'Pearson'. Default is 'Spearman'
 * `-s`
 * `-q`
+* `-y` (do we need this option?)
 * `-l`
 * `-u`
 * `-r`

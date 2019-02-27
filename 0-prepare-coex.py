@@ -14,32 +14,12 @@ from coexfunctions import *
 import inspect
 import ConfigParser
 import json
+import argparse
 version = getversion()
+
 # -------------------------------------------------------------------------------
 coexappdir = os.path.split(os.path.abspath(__file__))[0]
-config = ConfigParser.RawConfigParser(allow_no_value=True)
-config.read(os.path.join(coexappdir, 'app.cfg'))
-sourcefilesdir = config.get('directorypaths', 'sourcefilesdir')
-resdir = config.get('directorypaths', 'resdir')
-pathtobedtools = config.get('directorypaths', 'pathtobedtools')
-pathtopython = config.get('directorypaths', 'pathtopython')
-f5resource = config.get('directorypaths', 'f5resource')
 # -------------------------------------------------------------------------------
-if not os.path.isabs(sourcefilesdir):  # then the user has probably made a relative path to the script.
-    sourcefilesdir = os.path.join(coexappdir, sourcefilesdir)
-if not os.path.isabs(resdir):  # then the user has probably made a relative path to the script.
-    resdir = os.path.join(coexappdir, resdir)
-windowbed = os.path.join(pathtobedtools, "windowBed")
-if not os.path.isabs(pathtobedtools):  # then the user has probably made a relative path to the script.
-    windowbed = 'windowBed'
-if not os.path.isabs(pathtopython):  # then the user has probably made a relative path to the script.
-    pathtopython = os.path.join(coexappdir, pathtopython)
-# -------------------------------------------------------------------------------
-for filepath in [pathtobedtools, pathtopython]:
-    if not os.path.exists(filepath):
-        print ("Check app.cfg file for correct filepath: {}".format(filepath))
-# -------------------------------------------------------------------------------
-import argparse
 parser = argparse.ArgumentParser()
 
 # essential
@@ -56,21 +36,24 @@ parser.add_argument('-s', '--nsp', type=float, default=1.0,
                     help='node-specific pvalue in use; specify precision (1=perfect, 0=globaldistribution is used.)')
 parser.add_argument('-t', '--numthreads', type=int, default=1, help='numthreads used')
 parser.add_argument('-w', '--window', type=int, default=0, help='window size')
+#parser.add_argument('-k', '--knn', type=int, default=None, help='k-nearest neighbours to include in coexpression calculation')
 
 # useful
 parser.add_argument('-b', '--backgroundfile', default='unset', help='backgroundfile')
-parser.add_argument('-q', '--feature_coordinates', default=os.path.join(sourcefilesdir, "f5ep300_100.bed"), help='SORTED bedfile for the expression map. address of each locus is in expression file. This is needed in order to apply min_separation.')
-parser.add_argument('-x', '--expression_file', default=os.path.join(sourcefilesdir, "f5ep_ptt_condense.expression"), help='expression file for the expression map')
-parser.add_argument('-me', '--metadatafile', default=os.path.join(sourcefilesdir, "METADATA_U22_ENHANCERS"), help='metadatafile')
-parser.add_argument('-cl', '--chrom_lengths_file', default=os.path.join(sourcefilesdir, "chromlengths.txt"), help='chrom_lengths_file')
+parser.add_argument('-q', '--feature_coordinates', default= "SFD:f5ep300_100.bed", help='SORTED bedfile for the expression map. address of each locus is in expression file. This is needed in order to apply min_separation.')
+parser.add_argument('-x', '--expression_file', default= "SFD:f5ep_ptt_condense.expression", help='expression file for the expression map')
+parser.add_argument('-me', '--metadatafile', default= "SFD:METADATA_U22_ENHANCERS", help='metadatafile')
+parser.add_argument('-cl', '--chrom_lengths_file', default= "SFD:chromlengths.txt", help='chrom_lengths_file')
+parser.add_argument('-cc', '--config_file', default=os.path.join(coexappdir, 'app.cfg'), help='use a custom config file instead of app.cfg')
 
 # boring
+parser.add_argument('-o', '--outputdirname', default="auto", help='fullname of outputdir')
 parser.add_argument('-e', '--useremail', default="no_email", help='user email')
-parser.add_argument('-y', '--version_requested', default="null", help='version of the software the user is expecting')
+parser.add_argument('-y', '--version_requested', default=version, help='version of the software the user is expecting')
+parser.add_argument('-gwd', '--get_wd_only', action="store_true", default=False, help='returns the working directory path only')
+parser.add_argument('-v', '--verbose', action="store_true", default=False, help='increases verbosity')
 
 # occasional
-parser.add_argument('-l', '--seedfile', default="none", help='seed file')
-parser.add_argument('-v', '--verbose', action="store_true", default=False, help='increases verbosity')
 parser.add_argument('-j', '--pval_to_join', type=float, default=0.1, help='pval_to_join')
 parser.add_argument('-u', '--useaverage', action="store_true", default=False,
                     help='use the average coexpression score (eliminates position enrichment signal)')
@@ -81,6 +64,7 @@ parser.add_argument('-gpl', '--gpl_len', type=int, default=1000000, help='number
 parser.add_argument('-ss', '--soft_separation', type=int, default=100000, help='correlating promoters in this range will be joined. #IF pval_to_join >1 then this is a hard separation - that is, no promoters will be joined within this range.')
 
 # obselete
+parser.add_argument('-seed', '--seedfile', default="none", help='seed file')
 parser.add_argument('-a', '--anticorrelation', action="store_true", default=False, help='anticorrelation')
 parser.add_argument('-i', '--noiter', action="store_true", default=False, help='noiter')
 parser.add_argument('-r', '--recordedges', action="store_true", default=False, help='recordedges')
@@ -92,68 +76,81 @@ args = parser.parse_args()
 module = sys.modules[__name__]
 for name, value in vars(args).iteritems():
     setattr(module, name, value)
-    if args.verbose:
+    if args.verbose and not args.get_wd_only:
         print (name, value)
 # -------------------------------------------------------------------------------
-nsp = float(nsp)
+config = ConfigParser.RawConfigParser(allow_no_value=True)
+config.read(config_file)
+sourcefilesdir = config.get('directorypaths', 'sourcefilesdir')
+resdir = config.get('directorypaths', 'resdir')
+pathtobedtools = config.get('directorypaths', 'pathtobedtools')
+pathtopython = config.get('directorypaths', 'pathtopython')
+f5resource = config.get('directorypaths', 'f5resource')
+# -------------------------------------------------------------------------------
+if not os.path.isabs(sourcefilesdir):  # then the user has probably made a relative path to the script.
+    sourcefilesdir = os.path.join(coexappdir, sourcefilesdir)
+if not os.path.isabs(resdir):  # then the user has probably made a relative path to the script.
+    resdir = os.path.join(coexappdir, resdir)
+windowbed = os.path.join(pathtobedtools, "windowBed")
+# -------------------------------------------------------------------------------
+if args.feature_coordinates.startswith("SFD:"):
+    args.feature_coordinates = os.path.join(sourcefilesdir, args.feature_coordinates.replace("SFD:",""))
+if args.expression_file.startswith("SFD:"):
+    args.expression_file = os.path.join(sourcefilesdir, args.expression_file.replace("SFD:",""))
+if args.metadatafile.startswith("SFD:"):
+    args.metadatafile = os.path.join(sourcefilesdir, args.metadatafile.replace("SFD:",""))
+if args.chrom_lengths_file.startswith("SFD:"):
+    args.chrom_lengths_file = os.path.join(sourcefilesdir, args.chrom_lengths_file.replace("SFD:",""))
 # -------------------------------------------------------------------------------
 if snp_details_file == 'unset':
-    print "==reverting to test file because source file not set=="
+    if verbose and not args.get_wd_only:
+        print ("==reverting to test file because source file not set==")
     snp_details_file = os.path.join(sourcefilesdir, 'test.bed')
 # -------------------------------------------------------------------------------
-tic = timeit.default_timer()
-# -------------------------------------------------------------------------------
-# -###  SETTINGS
 if selectionthreshold_is_j:
     selectionthreshold = -math.log(pval_to_join, 10)
-# definition of expression file. hard coded
-data_start_col = 1  # nb zero  ex
-data_start_row = 1  # 1084
-# definition of bed file. hard coded. 
-chr_col = 1
-start_col = 2
-end_col = 3
 # -------------------------------------------------------------------------------
 # correlation store files
-expfilename = string.split(expression_file, "/")[-1]
+expfilename = string.split(args.expression_file, "/")[-1]
 if correlationmeasure == "Pearson":
-    correlationfile = "%s%s.correlationlist" % (sourcefilesdir, expfilename)
+    correlationfile = "{}.correlationlist".format(os.path.join(sourcefilesdir, expfilename))
 elif correlationmeasure == "Spearman":
-    correlationfile = "%s%s.spearmanlist" % (sourcefilesdir, expfilename)
+    correlationfile = "{}.spearmanlist".format(os.path.join(sourcefilesdir, expfilename))
 # -------------------------------------------------------------------------------
 common_label = os.path.split(snp_details_file)[1].replace(".bed", "")
-output_directory_label = common_label
-if nsp == 1:
-    output_directory_label += "_complete"
+if args.outputdirname == "auto":
+    output_directory_label = common_label
+    if nsp == 1:
+        output_directory_label += "_complete"
+    else:
+        output_directory_label += "_s%s" % nsp
+    if permutationmode == 'post':
+        output_directory_label += "_POST"
+    elif permutationmode == 'backcirc':
+        output_directory_label += "_BACKCIRC"
+    elif permutationmode == 'circular':
+        output_directory_label += "_CIRCULAR"
+    elif permutationmode == 'background':
+        output_directory_label += "_BACKGROUND"
+    if selectionthreshold_is_j: output_directory_label += "_SIJ"
+    if anticorrelation: output_directory_label += "_ANTIin"
+    if noiter: output_directory_label += "_NOiter"
+    if useaverage: output_directory_label += "_useav"
+    if window > 0: output_directory_label += "_w%s" % window
+    output_directory_label += "_pj%s" % pval_to_join
+    expstring = os.path.split(args.expression_file)[-1].replace('.expression', '')
+    output_directory_label += "_%s" % expstring
 else:
-    output_directory_label += "_s%s" % nsp
-if permutationmode == 'post':
-    output_directory_label += "_POST"
-elif permutationmode == 'backcirc':
-    output_directory_label += "_BACKCIRC"
-elif permutationmode == 'circular':
-    output_directory_label += "_CIRCULAR"
-elif permutationmode == 'background':
-    output_directory_label += "_BACKGROUND"
-if selectionthreshold_is_j: output_directory_label += "_SIJ"
-if anticorrelation: output_directory_label += "_ANTIin"
-if seedfile != "none": output_directory_label += "_seed"
-if noiter: output_directory_label += "_NOiter"
-if useaverage: output_directory_label += "_useav"
-if window > 0: output_directory_label += "_w%s" % window
-output_directory_label += "_pj%s" % pval_to_join
-expstring = os.path.split(expression_file)[-1].replace('.expression', '')
-output_directory_label += "_%s" % expstring
+    output_directory_label = args.outputdirname
 # -------------------------------------------------------------------------------
 supplementary_label = 'coex'
 # -------------------------------------------------------------------------------
 os.environ['OMP_NUM_THREADS'] = str(numthreads)
 # -------------------------------------------------------------------------------
 # snp_details file format - BED FORMAT
-snp_col = 3
 chrom_col = 0  # chrom is an integer only
 address_col = 1
-snp_details_p_col = -1
+snp_col = 3
 # -------------------------------------------------------------------------------
 # working files
 working_files_dir = "%s%s" % (resdir, output_directory_label)
@@ -166,13 +163,14 @@ sofile = os.path.join(coexappdir, './coexpression_v2.so') # './' needed for cdll
 if not os.path.exists(sofile):
     cmd = "gcc -shared  -O3 -fPIC -fopenmp %scoexpression_v2.c -o %scoexpression_v2.so" % (
         coexappdir, coexappdir)
-    print "=== coexpression is not installed ==="
+    if verbose: print ("=== coexpression is not installed ===")
     try:
-        print "trying to install by running command: \n{}".format(cmd)
+        if verbose: print ("trying to install by running command: \n{}".format(cmd))
         os.system(cmd)
     except:
         print "please run this command:"
         print cmd
+        sys.exit()
 permstore = os.path.join(working_files_dir, "permstore_%s.txt" % (supplementary_label))
 zerocountfile = os.path.join(working_files_dir, "zerocount_%s.txt" % (supplementary_label))
 edgestore = os.path.join(working_files_dir, "edgestore_%s.txt" % (supplementary_label))
@@ -182,8 +180,20 @@ storage_dir_perm_results = os.path.join(working_files_dir, "perm_results_store")
 path_to_makenet = os.path.join(coexappdir, "1-make-network.py")
 path_to_collationfile = os.path.join(coexappdir, "2-collate-results.py")
 # -------------------------------------------------------------------------------
+if get_wd_only or verbose:
+    print (working_files_dir)
+if get_wd_only:
+    sys.exit()
+# -------------------------------------------------------------------------------
+for filepath in [pathtobedtools, pathtopython]:
+    if '/' in filepath and not os.path.exists(filepath):
+        print ("\nCheck app.cfg file for correct filepath: {}\n".format(filepath))
+if version != version_requested:
+    print ("Running version {} but version {} was explicitly requested".format(version, version_requested))
+    sys.exit()
+# -------------------------------------------------------------------------------
 for thisdir in [working_files_dir, storage_dir_permutations, resdir, storage_dir_perm_results]:
-    check_dir(thisdir)
+    check_dir(thisdir, verbose)
 # -------------------------------------------------------------------------------
 runcommand = "{} {} -y {} -f {} -n {} -p {} -s {} -e {} -t {} -x {} -q {} -w {}".format(
     pathtopython,
@@ -195,8 +205,8 @@ runcommand = "{} {} -y {} -f {} -n {} -p {} -s {} -e {} -t {} -x {} -q {} -w {}"
     nsp,
     useremail,
     numthreads,
-    expression_file,
-    feature_coordinates,
+    args.expression_file,
+    args.feature_coordinates,
     window
     )
 
@@ -210,12 +220,15 @@ if verbose:
     print runcommand
 # -------------------------------------------------------------------------------
 coexpression = cdll.LoadLibrary(sofile)
-feature_label = string.split(string.split(feature_coordinates, "/")[-1], ".")[
+feature_label = string.split(string.split(args.feature_coordinates, "/")[-1], ".")[
     0]  # ie the "fantom5" in the coordinates file name
 snps_mapped = os.path.join(storage_dir_permutations, feature_label + ".%s.bed" % (0))
 statsfile = feature_label + "_" + supplementary_label + "_stats_snps.txt"
 # -------------------------------------------------------------------------------
-if verbose: print('verbose mode')
+if verbose: 
+    print('verbose mode')
+    print("feature_label", feature_label)
+    print("snps_mapped", snps_mapped)
 #seed random number generator to allow for testing
 #random.seed(176202)
 starttime = time.time()
@@ -229,7 +242,7 @@ def start_run():
     else:
         if verbose: print("Stopping after preparation")
 # -------------------------------------------------------------------------------
-if os.path.exists(path_to_collationfile) and not doitagain:
+if os.path.exists(collationcommandfile) and not doitagain:
     permfilecount = len(os.listdir(storage_dir_permutations))
     if permfilecount >= numperms:
         print ("\n{} existing permutations found in:\n {}\nStopping preparations (use -z to repeat preparation)\n".format(permfilecount, storage_dir_permutations))
@@ -239,7 +252,7 @@ if os.path.exists(path_to_collationfile) and not doitagain:
 # read chromosome lengths
 chrom_lengths = {}
 genome_length = 0
-f = open(chrom_lengths_file)
+f = open(args.chrom_lengths_file)
 lines = [string.split(string.strip(x), ": ") for x in f.readlines()]
 f.close()
 for line in lines:
@@ -249,7 +262,6 @@ print "genome read, length =", genome_length
 # -------------------------------------------------------------------------------
 # read snps
 snp_bed_data = {}
-snp_details = {}
 snp_p_values = {}
 all_snps = []
 badlines = []
@@ -277,7 +289,10 @@ for line in lines:
             pass
         continue
     if len(line) > 1:
-        snp = line[snp_col]
+        try:
+            snp = line[snp_col]
+        except:
+            snp = "_".join(line[:address_col])
         chrom = "chr%s" % line[chrom_col].replace("chr", "")
         if chrom not in chrom_lengths:
             if verbose: print ("skipping", chrom, "as length not known")
@@ -289,17 +304,6 @@ for line in lines:
         except:
             snp_bed_data[chrom] = {}
             snp_bed_data[chrom][address] = snp
-        try:
-            thisp = float(line[snp_details_p_col])  # 4th col of snp_details file
-        except:
-            thisp = 1
-        try:
-            snp_p_values[line[snp_col]]
-            snp_p_values[line[snp_col]] = min(snp_p_values[line[snp_col]], thisp)
-            if verbose: print ("snp p value already in dict. set to min: %s" % snp_p_values[line[snp_col]])
-        except:
-            snp_p_values[line[snp_col]] = thisp
-        snp_details[snp_col] = [line[chr_col], line[address_col], line[snp_details_p_col]]
     else:
         if verbose: print ("line too short(", len(line), "):", line)
 snp_count = len(all_snps)
@@ -326,16 +330,16 @@ for chromnum in chromnums:
 # read and check files now in case it isn't worth continuing
 # read the bed file of feature coordinates - NB this file is a sorted bed file
 if verbose: print ("reading feature coordinates...")
-prom_addresses, feature_dict, sorted_feature_list = readfeaturecoordinates(feature_coordinates)
+prom_addresses, feature_dict, sorted_feature_list = readfeaturecoordinates(args.feature_coordinates)
 
 # read the first column of the expression file 
 if verbose: print ("reading ids from expression file...")
-ids_in_expfile = read_column_fast(expression_file, 0)[1:]
+ids_in_expfile = read_column_fast(args.expression_file, 0)[1:]
 
 # check that expression file is a subset of bed file
 ids_in_bed_and_exp = set(ids_in_expfile) & set(sorted_feature_list)
 if len(ids_in_expfile) < len(ids_in_bed_and_exp):
-    print "bed coordinate datafile \n({}) is missing for some feature IDs in expression file \n({}):\n {}".format(feature_coordinates, expression_file, ', '.join(set(ids_in_expfile)-set(sorted_feature_list)))
+    print "bed coordinate datafile \n({}) is missing for some feature IDs in expression file \n({}):\n {}".format(args.feature_coordinates, args.expression_file, ', '.join(set(ids_in_expfile)-set(sorted_feature_list)))
     sys.exit()
 
 # create temporary bed file, this time with real data
@@ -345,11 +349,11 @@ for chrom in snp_bed_data:
     for address in snp_bed_data[chrom]:
         snpname = snp_bed_data[chrom][address]
         try:
-            o.write("%s\t%s\t%s\t%s\n" % (chrom.replace("chr", ""), int(address) - 1, address, snpname))
+            o.write("%s\t%s\t%s\t%s\n" % (chrom.replace("chr", ""), int(address), int(address)+1, snpname))
         except:
             if verbose: print ("error writing bed file:")
 o.close()
-bedcommand = windowbed + " -w %s" % (window) + " -a " + temp_snp_bed + " -b " + feature_coordinates + " > " + snps_mapped
+bedcommand = windowbed + " -w %s" % (window) + " -a " + temp_snp_bed + " -b " + args.feature_coordinates + " > " + snps_mapped
 if verbose: print (bedcommand)
 p = subprocess.Popen(bedcommand, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True)
 output = p.stdout.read()
@@ -364,8 +368,8 @@ if "Permission denied" in output:
     print p.stdout.read()
 
 # READ METADATA IF AVAILABLE
-if os.path.exists(metadatafile):
-    f = open(metadatafile)
+if os.path.exists(args.metadatafile):
+    f = open(args.metadatafile)
     lines = f.readlines()
     f.close()
     metadata = {}
@@ -383,7 +387,7 @@ if os.path.exists(metadatafile):
             knownnames[name].append(line[0])
         elif name != "":
             knownnames[name] = [line[0]]
-elif verbose: print ("metadatafile not found:\n{}\nAnalysis will continue but bonus promoters or genes won't be included".format(metadatafile))
+elif verbose: print ("args.metadatafile not found:\n{}\nAnalysis will continue but bonus promoters or genes won't be included".format(args.metadatafile))
 
 # READ SNPS_MAPPED
 primary_dict = {}
@@ -451,7 +455,7 @@ o.close()
 missing_ids = set(primary_dict.keys()) -  set(ids_in_expfile)
 if len(missing_ids) > 0:
     print ("*** INPUT ERROR: MISSING IDS ***\n{}".format(', '.join(missing_ids)))
-    print ("\nOut of {} ids in the input set, {} are missing from the expression_file({})\n*************\n".format(len(primary_dict.keys()), len(missing_ids), expression_file))
+    print ("\nOut of {} ids in the input set, {} are missing from the args.expression_file({})\n*************\n".format(len(primary_dict.keys()), len(missing_ids), args.expression_file))
     primary_dict = {x:primary_dict[x] for x in primary_dict if x not in missing_ids}
 if len(primary_dict) < 2:
     writequeue('Not enough of these SNPs mapped to FANTOM5 promoters.', queuefile)
@@ -463,7 +467,7 @@ if len(primary_dict) < 2:
 #                          RANDOMISATION PRE-MAPPING
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+writequeue('Starting to make permutations ({})'.format(permutationmode), queuefile)
 shifts = []
 mapfiles = {0: snps_mapped}
 if len(primary_dict) > 1:  # CAN ONLY PROCEED IF THERE ARE ENOUGH SNPS TO BE WORTH MAPPING
@@ -601,7 +605,7 @@ if len(primary_dict) > 1:  # CAN ONLY PROCEED IF THERE ARE ENOUGH SNPS TO BE WOR
                 except:
                     if verbose: print ("error writing bed file:")
         o.close()
-        cmd = windowbed + " -w %s" % (window) + " -a " + temp_snp_bed + " -b " + feature_coordinates + " > " + mapfiles[shift]
+        cmd = windowbed + " -w %s" % (window) + " -a " + temp_snp_bed + " -b " + args.feature_coordinates + " > " + mapfiles[shift]
         print cmd
         p = subprocess.Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True)
         output = p.stdout.read()
@@ -609,37 +613,38 @@ if len(primary_dict) > 1:  # CAN ONLY PROCEED IF THERE ARE ENOUGH SNPS TO BE WOR
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#                          RANDOMISATION POST MAPPING
+#                  MAKE CORRELATIONFILE IF NECESSARY
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-if permutationmode == 'post':
-    # READ WHOLE EXPRESSION FILE INTO LARGE DICT - faster overall and ESSENTIAL FOR ESTIMATION OF P-VALUE.
-    if verbose: print("Now using %s bytes" % (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
-    exp_dict, header = read_expression_file(expression_file)
-    if verbose: print ("read")
-
-    # Make lists of correlations between random pairs
-    # This speeds calculation of empirical p-values considerably
-    if verbose: print ("reading correlation lists:", correlationmeasure)
-    if verbose: print (correlationfile)
-    if os.path.exists(correlationfile):
-        f = open(correlationfile)
-        lines = f.readlines()
-        f.close()
-        if len(lines) > gpl_len:
-            lines = random.sample(lines, gpl_len)  # just use first million to save time...
-        try:
-            existingcorrelations = [float(x) for x in lines if string.strip(x) != ""]
-        except:
-            existingcorrelations = []
-    else:
+# Make lists of correlations between random pairs
+# This speeds calculation of empirical p-values considerably
+if verbose: print ("reading correlation lists:", correlationmeasure)
+if verbose: print (correlationfile)
+if os.path.exists(correlationfile):
+    f = open(correlationfile)
+    lines = f.readlines()
+    f.close()
+    if len(lines) > gpl_len:
+        lines = random.sample(lines, gpl_len)  # just use first million to save time...
+    try:
+        existingcorrelations = [float(x) for x in lines if string.strip(x) != ""]
+    except:
         existingcorrelations = []
-    new_to_add = int(min(gpl_len, gpl_len - len(existingcorrelations)) * 1.2)  # make too many just to be sure.
+else:
+    existingcorrelations = []
+new_to_add = int(min(gpl_len, gpl_len - len(existingcorrelations)) * 1.1)  # make too many just to be sure.
+
+if new_to_add > 0 or permutationmode == 'post':
+
     if new_to_add <= 1:
         new_to_add = 1  # we need to initiate the AG system anyway here.
-    if verbose: print ("adding", new_to_add, "correlations to existing", len(existingcorrelations))
 
+    if verbose: print ("adding", new_to_add, "correlations to existing", len(existingcorrelations))
+    # READ WHOLE EXPRESSION FILE INTO LARGE DICT - faster overall and ESSENTIAL FOR ESTIMATION OF P-VALUE.
+    if verbose: print("Now using %s bytes" % (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
+    exp_dict, header = read_expression_file(args.expression_file)
+    if verbose: print ("read")
     ptcf = exp_dict.keys()  # promoters to choose from
 
     # NEWLY DEVELOPMENTS BY AG
@@ -708,7 +713,13 @@ if permutationmode == 'post':
 
     for x in [0.05, 0.01, 0.001, 0.0005, 0.0001]:
         if verbose: print ("Correlation Centile at ", x, "=", centile(globalcorrelationlist, 1 - x))
-    
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#                          RANDOMISATION POST MAPPING
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+if permutationmode == 'post':
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #     now start post-mapping randomisation 
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

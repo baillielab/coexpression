@@ -55,7 +55,7 @@ def startjob(jobid):
     writequeue('Permutation number {} started'.format(jobid), queuefile)
 
 def progressupdate():
-    print "numperms:{} len(completed):{} num_started:{} yet to start:{} running:{}".format(numperms, len(completed),
+    print "\nrunlocal.py UPDATE: numperms:{} len(completed):{} num_started:{} yet to start:{} running:{}".format(numperms, len(completed),
                                                                                            len(started), len(yet_to_do),
                                                                                            len(running))
     print "running:", running

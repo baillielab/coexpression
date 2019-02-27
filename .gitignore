@@ -1,3 +1,6 @@
 .idea/
 *.pyc
 *.so
+app-eddie.cfg
+app-lx05-offline.cfg
+app-lx05.cfg

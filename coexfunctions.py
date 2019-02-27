@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-version = 'v1.23'
+version = 'v1.24'
 
 # duplicated imports
 import math
 import os
+import resource 
 import string
 import json
 from bisect import *
 from datetime import datetime
 
-import matplotlib.pyplot as plt
 # unique imports
 import networkx as nx
 import numpy as np
@@ -18,22 +18,39 @@ import pandas as pd
 from scipy import stats
 import subprocess
 
+# plotting imports
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+# ------------------------------------
 def getversion():
     return version
 
+def fix_permissions(this_path, v=False):
+    cmd = "/bin/chmod 755 %s" % (this_path)
+    o = b''
+    try:
+        o = subprocess.check_output(cmd)
+    except:
+        if v:
+            print ("This command failed in coexfunctions.fix_permissions:\n {}".format(cmd))
+    if v:
+        o = o.decode('utf-8')
+        print("cmd coexfunctions.fix_permissions:\n{}output:\n{}".format(cmd, o))
 
-def fix_permissions(this_path):
-    os.system("/bin/chmod 755 %s" % (this_path))
-
-
-def check_dir(this_dir):
+def check_dir(this_dir, v=False):
     if not os.path.isdir(this_dir):
+        if v:
+            print ("making directory: {}".format(this_dir))
         os.mkdir(this_dir)
-    fix_permissions(this_dir)
+    fix_permissions(this_dir,v)
 
 # ------------------------------------
 def readsettings(wfd):
-    f = open(os.path.join(wfd, 'settings.txt'))
+    setfile = os.path.join(wfd, 'settings.txt')
+    if not os.path.exists(setfile):
+        print ("SERIOUS ERROR: the following file should exist, but doesn't: \n{}".format(setfile))
+    f = open(setfile)
     thesesettings = json.load(f)
     f.close()
     for s in thesesettings:
@@ -117,85 +134,28 @@ def read_column_fast(filepath, column_index=0):
     p = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
     return string.split(p.stdout.read(),'\n')
 
-def read_expression_file_auto(filename, datastartcol='autodetect', datastartrow='autodetect', labelcol=0, labelrow=0, verbosefunction=False):
+def read_expression_file(filename, dsc=1, dsr=1, v=False):
     '''returns dict of {name:[list_of_floats], ...}, header row, startcol, startrow'''
-    f = open(filename)
-    lines = [string.split(string.strip(x), '\t') for x in f.readlines()]
-    f.close()
-    checklines = lines[:10]  # these will be used to determine dsc and dsr.
-    firstfloatfailcols = []
-    for r, row in enumerate(checklines):
-        for c in range(len(row) - 1, -1, -1):
-            try:
-                float(row[c])
-            except:
-                if row[c] != "NA":
-                    # print "unfloatable", "row",r,"col", c, checklines[r][c]
-                    firstfloatfailcols.append(c + 1)
-                    break
-    if len(firstfloatfailcols) > 0:
-        dsc = firstfloatfailcols[-1]
-        for r in range(len(firstfloatfailcols) - 1, -1, -1):
-            if firstfloatfailcols[r] != dsc:
-                # print "first floatfailcol inconsistency indicating data starts above row", r, firstfloatfailcols[r]
-                dsr = r + 1
-                break
-        try:
-            dsr
-        except:
-            dsr = 0  # if data starts in row 0 then this won't be detected above
-    else:
-        dsr = 0  # necessary in case firstfloatfailcols is empty
-        dsc = 0
-    if datastartcol == 'autodetect':
-        datastartcol = dsc
-    else:
-        datastartcol = int(datastartcol)
-        if datastartcol != dsc:
-            print "datastartcol (%s) discrepancy with autodetect (%s)" % (datastartcol, dsc)
-    if datastartrow == 'autodetect':
-        datastartrow = dsr
-    else:
-        datastartrow = int(datastartrow)
-        if datastartrow != dsr:
-            print "datastartrow (%s) discrepancy with autodetect (%s)" % (datastartrow, dsr)
-    if verbosefunction: print "reading expression file from column:%s and row:%s" % (dsc, dsr)
     exdic = {}
-    linelens = []
-    for i, line in enumerate(lines[datastartrow:]):
-        linelens.append(len(line))
-        try:
-            exdic[line[labelcol]]
-            print "duplicate label in expression file! ({}) taking first value".format(line[labelcol])
-            continue
-        except:
-            exdic[line[labelcol]] = []
-        for j, x in enumerate(line[datastartcol:]):
-            try:
-                exdic[line[labelcol]].append(float(x))
-            except:
-                exdic[line[labelcol]].append('NA')
-    linelens = sorted(list(set(linelens)))
-    if len(linelens) > 1:
-        print "Be aware: {} different line lengths in expression file ({})".format(len(linelens),
-                                                                                  ','.join([str(x) for x in linelens]))
-    return exdic, lines[labelrow][datastartcol:]
-
-def read_expression_file(filename):
-    '''returns dict of {name:[list_of_floats], ...}, header row, startcol, startrow'''
-    f = open(filename)
-    lines = [string.split(string.strip(x), '\t') for x in f.readlines()]
-    f.close()
-    exdic = {}
-    for i, line in enumerate(lines[1:]):
-        try:
-            exdic[line[0]]
-            print "duplicate label in expression file! ({}) taking first value".format(line[labelcol])
-            continue
-        except:
-            pass
-        exdic[line[0]] = [float(x) for x in line[1:]]
-    return exdic, lines[1:][1:]
+    if v: print ("starting to read exp file. Resource used: {}".format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
+    with open(filename) as f:
+        i=0
+        for line in f:
+            line = string.strip(line)
+            line = string.split(line,'\t')
+            if i==0:
+                header = line[dsc:]
+            else:
+                try:
+                    exdic[line[0]]
+                    print "duplicate label in expression file! ({}) taking first value".format(line[labelcol])
+                    continue
+                except:
+                    pass
+                exdic[line[0]] = [float(x) for x in line[1:]]
+            i+=1
+    if v: print ("Line {} of exp file. Resource used: {}".format(i, resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
+    return exdic, header
 
 def readfeaturecoordinates(featfile):
     f = open(featfile)
@@ -248,8 +208,11 @@ def join_nearby(thesepromoters, theseaddresses, globcors, this_exp_dict, pvtj=0.
     promGrpGraph = nx.Graph()  # creates graph promGrpGraph
     # creates DataFrame: index = promoter name, columns = chromosome, start, end
     a = pd.DataFrame({k: theseaddresses[k] for k in thesepromoters}, index=['chromosome', 'start', 'end']).T
-    # sort DataFrame inplace - VERY IMPORTANT
-    a.sort(['chromosome', 'start', 'end'], inplace=True)  
+    # sort DataFrame inplace - VERY IMPORTANT - two options for different versions of pandas
+    try:
+        a.sort_values(['chromosome', 'start', 'end'], inplace=True)
+    except:
+        a.sort(['chromosome', 'start', 'end'], inplace=True)
     for chrom in pd.unique(a.chromosome):
         grps = np.fromiter(merge_ranges(a[a.chromosome == chrom][['start', 'end']].values, softsep), dtype='i8,i8')
         for grp_start, grp_end in grps:
