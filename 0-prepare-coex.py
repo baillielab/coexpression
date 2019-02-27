@@ -195,7 +195,7 @@ if version != version_requested:
 for thisdir in [working_files_dir, storage_dir_permutations, resdir, storage_dir_perm_results]:
     check_dir(thisdir, verbose)
 # -------------------------------------------------------------------------------
-runcommand = "{} {} -y {} -f {} -n {} -p {} -s {} -e {} -t {} -x {} -q {} -w {}".format(
+runcommand = "{} {} -y {} -f {} -n {} -p {} -s {} -e {} -t {} -x {} -q {} -w {} -o {}".format(
     pathtopython,
     os.path.join(coexappdir, '0-prepare-coex.py'),
     version,
@@ -207,7 +207,8 @@ runcommand = "{} {} -y {} -f {} -n {} -p {} -s {} -e {} -t {} -x {} -q {} -w {}"
     numthreads,
     args.expression_file,
     args.feature_coordinates,
-    window
+    window,
+    args.outputdirname,
     )
 
 runcommand += " -j %s" % (pval_to_join)
