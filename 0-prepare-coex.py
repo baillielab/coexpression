@@ -161,9 +161,9 @@ storage_dir_permutations = os.path.join(working_files_dir, "permutation_store")
 settingsfile = os.path.join(working_files_dir, "settings.txt")
 sofile = os.path.join(coexappdir, './coexpression_v2.so') # './' needed for cdll.LoadLibrary(sofile) below
 if not os.path.exists(sofile):
-    cmd = "gcc -shared  -O3 -fPIC -fopenmp %scoexpression_v2.c -o %scoexpression_v2.so" % (
-        coexappdir, coexappdir)
     if verbose: print ("=== coexpression is not installed ===")
+    cmd = "gcc -shared  -O3 -fPIC -fopenmp %s/coexpression_v2.c -o %s/coexpression_v2.so" % (
+        coexappdir, coexappdir)
     try:
         if verbose: print ("trying to install by running command: \n{}".format(cmd))
         os.system(cmd)
@@ -226,7 +226,7 @@ feature_label = string.split(string.split(args.feature_coordinates, "/")[-1], ".
 snps_mapped = os.path.join(storage_dir_permutations, feature_label + ".%s.bed" % (0))
 statsfile = feature_label + "_" + supplementary_label + "_stats_snps.txt"
 # -------------------------------------------------------------------------------
-if verbose: 
+if verbose:
     print('verbose mode')
     print("feature_label", feature_label)
     print("snps_mapped", snps_mapped)

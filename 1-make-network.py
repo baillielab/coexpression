@@ -67,11 +67,8 @@ sofile = os.path.join(coexappdir, 'coexpression_v2.so')
 coexpression = cdll.LoadLibrary(sofile)
 if verbose: print "sofile read"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-if verbose:
-    exp_dict, header = read_expression_file(expression_file, v=True)
-    print "expression file read"
-else:
-    exp_dict, header = read_expression_file(expression_file)
+exp_dict, header = read_expression_file(expression_file)
+if verbose: print "expression file read"
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 prom_addresses, feature_dict, sl = readfeaturecoordinates(feature_coordinates)
 if verbose: print "feature_coordinates read"

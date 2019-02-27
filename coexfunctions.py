@@ -221,7 +221,8 @@ def read_expression_file(filename):
     df.dropna(axis=1, inplace=True)
 
     # Drop duplicate rows (row labels), keeping the first occurrence
-    df.drop_duplicates(subset='sample', keep='first', inplace=True)
+    #df.drop_duplicates(subset='sample', keep='first', inplace=True)
+    df.drop_duplicates(subset='sample', inplace=True)
 
     # Extract promoters, values and header from DataFrame
     df.set_index('sample', inplace=True)
@@ -230,7 +231,6 @@ def read_expression_file(filename):
     header = list(df.columns.values)
 
     return ExpressionDict(promoters, expression_values), header
-
 
 def readfeaturecoordinates(featfile):
     f = open(featfile)

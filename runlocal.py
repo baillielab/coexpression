@@ -3,12 +3,12 @@
 ''' run a pre-prepared coexpresion analysis '''
 
 # ----------------------------------------
-import argparse
-import copy
-import subprocess
 import sys
-import threading
+import copy
+import argparse
 import datetime
+import threading
+import subprocess
 
 from coexfunctions import *
 
