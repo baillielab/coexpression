@@ -134,7 +134,7 @@ def read_column_fast(filepath, column_index=0):
     p = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
     return string.split(p.stdout.read(),'\n')
 
-def read_expression_file(filename, dsc=1, dsr=1, v=False):
+def read_expression_file_old(filename, dsc=1, dsr=1, v=False):
     '''returns dict of {name:[list_of_floats], ...}, header row, startcol, startrow'''
     exdic = {}
     if v: print ("starting to read exp file. Resource used: {}".format(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
@@ -156,6 +156,81 @@ def read_expression_file(filename, dsc=1, dsr=1, v=False):
             i+=1
     if v: print ("Line {} of exp file. Resource used: {}".format(i, resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
     return exdic, header
+
+class ExpressionDict(dict):
+    """Minimal dictionary-like object that takes a promoter as a key and returns expression values as a list
+
+    The class stores
+      1) expression values as a 2D NumPy array
+      2) a promoter to index mapping to allow a lookup into the expression values array
+
+    A lookup is two-stage: promoter -> integer index -> row in expression array (see __getitem__)
+
+    Note: a number of member functions that a dict class relies on have not been implemented
+    The only things that *should* be done with this class are:
+      - initialisation:  mydict = ExpressionDict(promoters, expressions)
+      - lookup:          expression = mydict['chr14:105953526..105953541,+']
+      - length:          len(mydict)
+    """
+
+    def __init__(self, promoters, expressions):
+        promoter_to_index = {k: v for v, k in enumerate(promoters)}
+        super(ExpressionDict, self).__init__(promoter_to_index)
+        self.expressions = expressions
+
+    def __getitem__(self, key):
+        # Lookup promoter by calling base class
+        index = super(ExpressionDict, self).__getitem__(key)
+        # Return expression values, as a list for backwards compatibility
+        return list(self.expressions[index])
+
+    # The following methods have not been implemented
+    def __setitem__(self, key, value):
+        raise NotImplementedError()
+
+    def __iter__(self):
+        raise NotImplementedError()
+
+    def values(self):
+        raise NotImplementedError()
+
+    def items(self):
+        raise NotImplementedError()
+
+
+def read_expression_file(filename):
+    """Read expression file into a dict-like datastructure (an instance of ExpressionDict)
+
+    This function assumes the file has one header row and one label column named 'sample', e.g.:
+
+    sample                        thyroid_fetal  medulla_oblongata_newborn ...
+    chr10:100013403..100013414,-  0.0            0.0                       ...
+    chr10:100027943..100027958,-  1.01058594479  0.349270596499            ...
+    ...
+
+    The separator is assumed to be white space (although pandas tries to determine this by inspection)
+
+    Returns: the ExpressionDict and column names in the header line
+    """
+
+    # Read expression file into DataFrame,
+    df = pd.read_table(filename, header=0)
+    assert ('sample' in df.columns)
+
+    # Drop columns with any NAs
+    df.dropna(axis=1, inplace=True)
+
+    # Drop duplicate rows (row labels), keeping the first occurrence
+    df.drop_duplicates(subset='sample', keep='first', inplace=True)
+
+    # Extract promoters, values and header from DataFrame
+    df.set_index('sample', inplace=True)
+    promoters = list(df.index)
+    expression_values = df.values
+    header = list(df.columns.values)
+
+    return ExpressionDict(promoters, expression_values), header
+
 
 def readfeaturecoordinates(featfile):
     f = open(featfile)
