@@ -169,10 +169,10 @@ pseudonyms = {}
 htmlresults = outputfilelabel + ".html"
 h = open(os.path.join(working_files_dir, htmlresults), "w")
 h.write(
-    "<table id=\"results\">\n<tr>\n<th>Top promoter (click for details in new tab)</th>\n<th>SNPs in top_promoter</th>\n<th>Coexpression score</th>\n<th>FDR</th>\n</tr>")
+    "<table id=\"results\">\n<tr>\n<th>Top promoter (click for details in new tab)</th>\n<th>SNPs in top_promoter</th>\n<th>Corrected coexpression score</th>\n<th>FDR</th>\n</tr>")
 fullresults = outputfilelabel + ".individual_scores"
 outputfilecontents = ''
-outputfilecontents += "Top_promoter[SNPs_in_top_promoter]\tpromoter_snps_in_region\tchosen_promoter_id\tpromoters\toriginal_p\tcoexpression_score\traw_p(perm)\tBenjamini-Hochberg\n"
+outputfilecontents += "Top_promoter[SNPs_in_top_promoter]\tpromoter_snps_in_region\tchosen_promoter_id\tpromoters\toriginal_p\tcorrected_coexpression_score\traw_p(perm)\tBenjamini-Hochberg\n"
 # for key in indjoined:
 i = 0
 highlight = []
@@ -232,9 +232,17 @@ for key, value in sorted(indmeasure.iteritems(), key=lambda (k, v): (v, k), reve
     realmeasures.sort()
     permuted_indm_p.sort(reverse=False)
     fdr_permuted_indm.sort(reverse=True)
-    outputfilecontents += "%s [%s]\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % \
-                          (wname, winning_snps, snp_string, winners[group_label], m, minp, indmeasure[key], \
-                           permuted_indm_p[i], fdr_BH_permuted_indm[i])
+    outputfilecontents += "%s [%s]\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (
+                            wname,
+                            winning_snps,
+                            snp_string,
+                            winners[group_label],
+                            m,
+                            minp,
+                            indmeasure[key]/len(indmeasure),
+                            permuted_indm_p[i],
+                            fdr_BH_permuted_indm[i],
+                           )
     fdrstore[key] = fdr_BH_permuted_indm[i]
 
     if fdr_BH_permuted_indm[i] < 0.05:
@@ -248,7 +256,7 @@ for key, value in sorted(indmeasure.iteritems(), key=lambda (k, v): (v, k), reve
         h.write("<tr>\n")
     h.write("<td><a href=\"%s%s\" target=\"_blank\">%s</a></td><td>%s</td><td>%s</td><td>%s</td></tr>\n" \
             % (f5resource, winners[group_label], wname, winning_snps.replace("|", ", "), \
-               round(indmeasure[key], 1), round(fdr_BH_permuted_indm[i], 2)))
+               round(indmeasure[key]/len(indmeasure), 1), round(fdr_BH_permuted_indm[i], 2)))
     i += 1
 h.write("</table>")
 h.close()
