@@ -1,22 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
-version = 'v1.24'
+version = 'v1.3'
 
 # duplicated imports
-import math
 import os
-import resource 
-import string
+import math
 import json
+import string
+import resource
 from bisect import *
 from datetime import datetime
 
 # unique imports
-import networkx as nx
+import subprocess
 import numpy as np
 import pandas as pd
+import networkx as nx
 from scipy import stats
-import subprocess
 
 # plotting imports
 import matplotlib
