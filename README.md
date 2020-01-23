@@ -109,6 +109,16 @@ Options given to `0-prepare-coex.py` are read in from the directory
 ---
 ## Example usage
 
+### Input file format
+
+A bed-style file is required with 3 columns (last one is optional):
+
+CHROM	START	END	snp_id(optional)
+1	12345	12346	rs123
+
+
+### Script usage
+
 First, run the prepare script:
 ```
 $ python 0-prepare-coex.py -po -n 100 -p backcirc -f <inputfile.bed> -b <backgroundfile.bed> 

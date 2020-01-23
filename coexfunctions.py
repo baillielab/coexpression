@@ -106,7 +106,7 @@ def get_gwad(chrom, address, masterchromrange, verbosefunction=False):
     try:
         masterchromrange[chrom]
     except:
-        print "chrom not in masterchromrange", chrom
+        print ("chrom not in masterchromrange", chrom)
         return "chrom not in masterchromrange"
     if (masterchromrange[chrom][0] + address) < masterchromrange[chrom][1] or address < 0:
         return masterchromrange[chrom][0] + address
@@ -148,7 +148,7 @@ def read_expression_file_old(filename, dsc=1, dsr=1, v=False):
             else:
                 try:
                     exdic[line[0]]
-                    print "duplicate label in expression file! ({}) taking first value".format(line[labelcol])
+                    print ("duplicate label in expression file! ({}) taking first value".format(line[labelcol]))
                     continue
                 except:
                     pass
@@ -215,17 +215,17 @@ def read_expression_file(filename):
 
     # Read expression file into DataFrame,
     df = pd.read_table(filename, header=0)
-    assert ('sample' in df.columns)
+    samplecol = df.columns[0]
 
     # Drop columns with any NAs
     df.dropna(axis=1, inplace=True)
 
     # Drop duplicate rows (row labels), keeping the first occurrence
     #df.drop_duplicates(subset='sample', keep='first', inplace=True)
-    df.drop_duplicates(subset='sample', inplace=True)
+    df.drop_duplicates(subset=samplecol, inplace=True)
 
     # Extract promoters, values and header from DataFrame
-    df.set_index('sample', inplace=True)
+    df.set_index(samplecol, inplace=True)
     promoters = list(df.index)
     expression_values = df.values
     header = list(df.columns.values)
@@ -385,7 +385,7 @@ def empiricalp(thisvalue, empiricalcollection):
 
 def get_correlation(pa, pb, ed, cm='Spearman', verbosefunction=False):
     if len(ed[pa]) == 0 or len(ed[pb]) == 0:
-        print "empty list in get_correlation", pa, pb
+        print ("empty list in get_correlation", pa, pb)
     if sum(ed[pa]) > 0 and sum(ed[pb]) > 0:
         result = stats.spearmanr(ed[pa], ed[pb])[0]
         if cm == "Pearson":
