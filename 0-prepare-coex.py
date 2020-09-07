@@ -257,8 +257,8 @@ f = open(args.chrom_lengths_file)
 lines = [string.split(string.strip(x), ": ") for x in f.readlines()]
 f.close()
 for line in lines:
-    chrom_lengths[line[0]] = int(line[1])
-    genome_length += int(line[1])
+    chrom_lengths[line[0]] = int(float(line[1]))
+    genome_length += int(float(line[1]))
 print "genome read, length =", genome_length
 # -------------------------------------------------------------------------------
 # read snps
@@ -281,7 +281,7 @@ for line in lines:
     else:
         line = string.split(string.strip(line))
     try:
-        address = int(line[address_col])
+        address = int(float(line[address_col]))
     except:
         if verbose: print ("skipping line of snp_details file", line)
         try:
@@ -506,7 +506,7 @@ if len(primary_dict) > 1:  # CAN ONLY PROCEED IF THERE ARE ENOUGH SNPS TO BE WOR
         for line in backlines:
             line = string.split(string.strip(line), '\t')
             chrom = 'chr' + line[0].replace('chr', '')
-            address = int(line[1])
+            address = int(float(line[1]))
             snp = line[3]
             try:
                 back_bed_data[chrom][address] = snp
